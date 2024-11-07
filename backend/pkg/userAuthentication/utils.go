@@ -15,13 +15,14 @@ type RegisterResponse struct {
     JWT string `json:"jwt"`
 }
 
-func getDbConnection () *sql.DB {
+var Db *sql.DB
+
+func InitDb () {
 	connStr := "postgres://chatappuser:tashchatapp@localhost:5432/chatappdb?sslmode=disable"
 	// Open a connection using the "database/sql" package and the pq driver
-	db, err := sql.Open("postgres", connStr)
+	var err error
+	Db, err = sql.Open("postgres", connStr)
 	if err != nil {
 		log.Fatalf("Could not connect to the database: %v", err)
 	}
-	defer db.Close()
-	return db
 }

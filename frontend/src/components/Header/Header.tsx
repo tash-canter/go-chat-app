@@ -1,21 +1,21 @@
 import React from "react";
-import styled from "styled-components";
 
 export const Header = () => (
-  <StyledHeader className="header">
-    <h2>Tash's Chat App {"<3"}</h2>
-  </StyledHeader>
+  <div className="header" style={styles.header}>
+    <h2 style={styles.h2}>Tash's Chat App {"<3"}</h2>
+  </div>
 );
 
-const StyledHeader = styled("div")`
-  background-color: #15223b;
-  width: 100%;
-  margin: 0;
-  padding: 10px;
-  color: white;
-
-  h2 {
-    margin: 0;
-    padding: 0;
-  }
-`;
+const styles: { [key: string]: React.CSSProperties } = {
+  header: {
+    backgroundColor: "#15223b",
+    width: "100%",
+    margin: 0,
+    padding: "10px",
+    color: "white",
+  },
+  h2: {
+    margin: 0,
+    padding: 0,
+  },
+};

@@ -12,6 +12,7 @@ import (
 	_ "github.com/golang-migrate/migrate/v4/source/file"
 	_ "github.com/lib/pq"
 
+	"github.com/tash-canter/go-chat-app/backend/handlers"
 	"github.com/tash-canter/go-chat-app/backend/pkg/userAuthentication"
 	"github.com/tash-canter/go-chat-app/backend/pkg/websocket"
 )
@@ -74,12 +75,36 @@ func migrateDb() {
    fmt.Println("Migrations applied successfully!")
 }
 
+func corsMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Access-Control-Allow-Origin", "http://localhost:3000")
+		w.Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS, PUT, DELETE")
+		w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
+		w.Header().Set("Access-Control-Allow-Credentials", "true")
+
+		// Handle preflight request
+		if r.Method == http.MethodOptions {
+			w.WriteHeader(http.StatusOK)
+			return
+		}
+
+		next.ServeHTTP(w, r)
+	})
+}
+
+
+
 func main() {
 	fmt.Println("Distributed Chat App v0.01")
 
+	mux := http.NewServeMux()
+
 	migrateDb()
 	setupRoutes()
-	http.HandleFunc("/api/login", userAuthentication.LoginUser)
-	http.HandleFunc("/api/register", userAuthentication.RegisterUser)
-	http.ListenAndServe(":8080", nil)
+	userAuthentication.InitDb()
+	mux.HandleFunc("/api/login", handlers.LoginHandler)
+	mux.HandleFunc("/api/register", userAuthentication.RegisterUser)
+	handler := corsMiddleware(mux)
+	http.ListenAndServe(":8080", handler)
+	defer userAuthentication.Db.Close()
 }

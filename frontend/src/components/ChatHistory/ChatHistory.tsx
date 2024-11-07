@@ -1,7 +1,7 @@
 import React from "react";
 import styled from "styled-components";
 import { SpeechBubble } from "../SpeechBubble";
-import { Message } from "../../api";
+import { Message } from "../../stores/ChatStore";
 
 interface ChatHistoryProps {
   chatHistory: Message[];
@@ -22,19 +22,23 @@ export const ChatHistory = ({ chatHistory, username }: ChatHistoryProps) => {
   });
 
   return (
-    <StyledChatHistory>
-      <h2>Welcome to the chat room {username}. Type your messages below.</h2>
+    <div style={styles.chatHistory}>
+      <h2 style={styles.h2}>
+        Welcome to the chat room {username}. Type your messages below.
+      </h2>
       {messages}
-    </StyledChatHistory>
+    </div>
   );
 };
 
-const StyledChatHistory = styled("div")`
-  background-color: #f7f7f7;
-  margin: 0;
-  padding: 20px;
-  h2 {
-    margin: 0;
-    padding: 0;
-  }
-`;
+const styles: { [key: string]: React.CSSProperties } = {
+  chatHistory: {
+    backgroundColor: "#f7f7f7",
+    margin: 0,
+    padding: "20px",
+  },
+  h2: {
+    margin: 0,
+    padding: 0,
+  },
+};

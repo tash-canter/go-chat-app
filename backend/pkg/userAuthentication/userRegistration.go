@@ -2,6 +2,7 @@ package userAuthentication
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 
 	"golang.org/x/crypto/bcrypt"
@@ -22,12 +23,11 @@ func RegisterUser(w http.ResponseWriter, r *http.Request) {
         http.Error(w, "Internal Server Error", http.StatusInternalServerError)
         return
     }
-
-    db := getDbConnection()
 	
     // Store in database (using PostgreSQL in this example)
-    _, err = db.Exec("INSERT INTO users (username, password) VALUES ($1, $2)", user.Username, string(hashedPassword))
+    _, err = Db.Exec("INSERT INTO users (username, password) VALUES ($1, $2)", user.Username, string(hashedPassword))
     if err != nil {
+        fmt.Println(err)
         http.Error(w, "Could not create user", http.StatusInternalServerError)
         return
     }

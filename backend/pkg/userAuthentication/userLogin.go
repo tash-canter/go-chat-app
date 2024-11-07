@@ -3,6 +3,7 @@ package userAuthentication
 import (
 	"database/sql"
 	"encoding/json"
+	"fmt"
 	"net/http"
 
 	"golang.org/x/crypto/bcrypt"
@@ -18,13 +19,13 @@ func LoginUser(w http.ResponseWriter, r *http.Request) {
 
     // Fetch the stored user from the database
     var storedUser User
-	db := getDbConnection()
-    err = db.QueryRow("SELECT id, username, password FROM users WHERE username = $1", user.Username).Scan(&storedUser.ID, &storedUser.Username, &storedUser.Password)
+    err = Db.QueryRow("SELECT id, username, password FROM users WHERE username = $1", user.Username).Scan(&storedUser.ID, &storedUser.Username, &storedUser.Password)
     if err != nil {
         if err == sql.ErrNoRows {
             http.Error(w, "User not found", http.StatusUnauthorized)
             return
         }
+        fmt.Println(err)
         http.Error(w, "Internal Server Error", http.StatusInternalServerError)
         return
     }

@@ -1,39 +1,34 @@
-import React, { useEffect, useState } from "react";
-import "./App.css";
+import React, { useContext, useEffect, useState } from "react";
 import { Header, ChatHistory, ChatInput } from "./../";
-import { connect, Message, sendMsg } from "../../api";
+import { connect, sendMsg } from "../../api";
+import chatStore, { RootStoreContext } from "../../stores/ChatStore";
+import { observer } from "mobx-react-lite";
+import { StoreContext } from "../../stores/StoreContext";
 
-const ChatPage = () => {
-  const [chatHistory, setChatHistory] = useState<Message[]>([]);
-  const [username, setUsername] = useState<string>();
+export const ChatPage = observer(() => {
+  const chatStore = useContext(StoreContext);
+  const {
+    username,
+    addMessage,
+    setCurrentMessage,
+    messages,
+    initializeSocket,
+  } = chatStore;
   useEffect(() => {
-    if (username) {
-      connect((msg: MessageEvent) => {
-        console.log(msg);
-        setChatHistory([...chatHistory, { body: msg.data, username }]);
-      });
-    }
-  }, [chatHistory, username]);
+    initializeSocket();
+  }, []);
 
   const send = (event: any) => {
     if (event.keyCode === 13 && username) {
-      sendMsg({ body: event.target.value, username });
+      addMessage(event.target.value);
       event.target.value = "";
     }
   };
 
-  //   const createUsername = (event: any) => {
-  //     if (event.keyCode === 13) {
-  //       setUsername(event.target.value);
-  //     }
-  //   };
-
   return (
     <>
-      <ChatHistory chatHistory={chatHistory} username={"tash"} />
+      <ChatHistory chatHistory={messages} username={username} />
       <ChatInput send={send} />
     </>
   );
-};
-
-export default ChatPage;
+});

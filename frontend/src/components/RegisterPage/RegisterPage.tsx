@@ -1,18 +1,19 @@
 import React, { useContext, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { observer } from "mobx-react-lite";
 import { StoreContext } from "../../stores/StoreContext";
 
-export const LoginPage = observer(() => {
-  console.log("HERE");
-  const [error, setError] = useState(null);
+export const RegisterPage = observer(() => {
   const chatStore = useContext(StoreContext);
   const { username, password, setPassword, setUsername, setToken } = chatStore;
+  const [error, setError] = useState(null);
+  const navigate = useNavigate();
 
+  // Perform registration logic
   const handleSubmit = async (e: any) => {
-    e.preventDefault(); // Prevent the form from refreshing the page
-
+    e.preventDefault();
     try {
-      const response = await fetch("http://localhost:8080/api/login", {
+      const response = await fetch("http://localhost:8080/api/register", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -31,7 +32,7 @@ export const LoginPage = observer(() => {
 
       setToken(data.jwt);
 
-      window.location.href = "/chat";
+      navigate("/");
     } catch (err: any) {
       setError(err.message);
     }
@@ -40,7 +41,7 @@ export const LoginPage = observer(() => {
   return (
     <div style={styles.container}>
       <div style={styles.formWrapper}>
-        <h2 style={styles.heading}>Welcome Back</h2>
+        <h2 style={styles.heading}>Register</h2>
         <form onSubmit={handleSubmit} style={styles.form}>
           <div style={styles.inputGroup}>
             <label htmlFor="username" style={styles.label}>
@@ -72,13 +73,13 @@ export const LoginPage = observer(() => {
           </div>
           {error && <p style={styles.error}>{error}</p>}
           <button type="submit" style={styles.button}>
-            Login
+            Register
           </button>
         </form>
         <p style={styles.register}>
-          Don't have an account?{" "}
-          <a href="/register" style={styles.link}>
-            Register
+          Already have an account?{" "}
+          <a href="/" style={styles.link}>
+            Login
           </a>
         </p>
       </div>
