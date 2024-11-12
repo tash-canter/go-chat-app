@@ -11,42 +11,48 @@ export const SpeechBubble = ({
   currUsername,
 }: SpeechBubble) => {
   const isFromUser = currUsername === username;
+  console.log(isFromUser);
+  const styles = getStyles({ isFromUser });
   return (
-    <MessageWrapper isFromUser={isFromUser}>
-      <StyledSpeechBubble isFromUser={isFromUser}>
-        <StyledUsername>{username}</StyledUsername>
-        <StyledMessage>{body}</StyledMessage>
-      </StyledSpeechBubble>
-    </MessageWrapper>
+    <div style={styles.messageWrapper}>
+      <div style={styles.speechBubble}>
+        <div style={styles.username}>{username}</div>
+        <div style={styles.message}>{body}</div>
+      </div>
+    </div>
   );
 };
 
-const StyledSpeechBubble = styled("div")`
-  position: relative;
-  background-color: ${(props) => (props.isFromUser ? "#007bff" : "#e0e0e0")};
-  border-radius: 15px;
-  color: ${(props) => (props.isFromUser ? "white" : "black")};
-  padding: 10px 15px;
-  margin: 10px 0;
-  max-width: 400px;
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
-  align-self: ${(props) => (props.isFromUser ? "flex-end" : "flex-start")};
-`;
+type StyleProps = {
+  isFromUser: boolean;
+};
 
-const StyledUsername = styled("div")`
-  font-weight: bold;
-  margin-bottom: 5px;
-  text-align: left;
-`;
-
-const StyledMessage = styled("div")`
-  font-size: 14px;
-  text-align: left;
-`;
-
-const MessageWrapper = styled("div")`
-  display: flex;
-  justify-content: ${(props) =>
-    props.isFromUser ? "flex-end" : "flex-start"}; /* Align based on user */
-  margin: 10px 0;
-`;
+const getStyles = ({
+  isFromUser,
+}: StyleProps): { [key: string]: React.CSSProperties } => ({
+  speechBubble: {
+    position: "relative",
+    backgroundColor: isFromUser ? "#007bff" : "#e0e0e0",
+    borderRadius: "15px",
+    color: isFromUser ? "white" : "black",
+    padding: "10px 15px",
+    margin: "10px 0",
+    maxWidth: "400px",
+    boxShadow: "0 2px 5px rgba(0, 0, 0, 0.2)",
+    alignSelf: isFromUser ? "flex-end" : "flex-start",
+  },
+  username: {
+    fontWeight: "bold", // Corrected fontWeight syntax
+    marginBottom: "5px", // Corrected margin syntax
+    textAlign: "left", // Corrected text-align syntax
+  },
+  message: {
+    fontSize: "14px", // Corrected font-size to fontSize
+    textAlign: "left", // Corrected text-align syntax
+  },
+  messageWrapper: {
+    display: "flex", // Corrected display property
+    justifyContent: isFromUser ? "flex-end" : "flex-start", // Corrected logic to use `isFromUser`
+    margin: "10px 0",
+  },
+});

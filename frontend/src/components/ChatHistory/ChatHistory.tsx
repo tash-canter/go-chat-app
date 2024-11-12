@@ -10,12 +10,11 @@ interface ChatHistoryProps {
 
 export const ChatHistory = ({ chatHistory, username }: ChatHistoryProps) => {
   const messages = chatHistory.map((msg, index) => {
-    const json = JSON.parse(msg.body);
     return (
       <SpeechBubble
         key={index}
-        body={json.body}
-        username={json.Username}
+        body={msg.body}
+        username={msg.username}
         currUsername={username}
       />
     );

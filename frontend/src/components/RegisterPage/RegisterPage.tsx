@@ -1,10 +1,13 @@
 import React, { useContext, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { observer } from "mobx-react-lite";
-import { StoreContext } from "../../stores/StoreContext";
+import { StoreContext } from "../../stores/ChatStore";
 
 export const RegisterPage = observer(() => {
   const chatStore = useContext(StoreContext);
+  if (!chatStore) {
+    throw new Error("StoreContext must be used within a StoreContext.Provider");
+  }
   const { username, password, setPassword, setUsername, setToken } = chatStore;
   const [error, setError] = useState(null);
   const navigate = useNavigate();
@@ -78,9 +81,9 @@ export const RegisterPage = observer(() => {
         </form>
         <p style={styles.register}>
           Already have an account?{" "}
-          <a href="/" style={styles.link}>
+          <Link to="/" style={styles.link}>
             Login
-          </a>
+          </Link>
         </p>
       </div>
     </div>

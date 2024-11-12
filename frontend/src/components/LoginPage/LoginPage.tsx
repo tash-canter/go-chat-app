@@ -1,13 +1,23 @@
-import React, { useContext, useState } from "react";
+import React, { useContext, useEffect, useState } from "react";
 import { observer } from "mobx-react-lite";
-import { StoreContext } from "../../stores/StoreContext";
+import { StoreContext } from "../../stores/ChatStore";
+import { Link, useNavigate } from "react-router-dom";
 
 export const LoginPage = observer(() => {
-  console.log("HERE");
   const [error, setError] = useState(null);
   const chatStore = useContext(StoreContext);
-  const { username, password, setPassword, setUsername, setToken } = chatStore;
+  const navigate = useNavigate();
+  if (!chatStore) {
+    throw new Error("StoreContext must be used within a StoreContext.Provider");
+  }
+  const { username, password, isLoggedIn, setPassword, setUsername, setToken } =
+    chatStore;
 
+  useEffect(() => {
+    if (isLoggedIn) {
+      navigate("/chat");
+    }
+  }, []);
   const handleSubmit = async (e: any) => {
     e.preventDefault(); // Prevent the form from refreshing the page
 
@@ -31,7 +41,7 @@ export const LoginPage = observer(() => {
 
       setToken(data.jwt);
 
-      window.location.href = "/chat";
+      navigate("/chat");
     } catch (err: any) {
       setError(err.message);
     }
@@ -77,9 +87,9 @@ export const LoginPage = observer(() => {
         </form>
         <p style={styles.register}>
           Don't have an account?{" "}
-          <a href="/register" style={styles.link}>
+          <Link to="/register" style={styles.link}>
             Register
-          </a>
+          </Link>
         </p>
       </div>
     </div>

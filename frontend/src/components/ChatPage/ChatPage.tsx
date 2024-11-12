@@ -1,25 +1,19 @@
-import React, { useContext, useEffect, useState } from "react";
-import { Header, ChatHistory, ChatInput } from "./../";
-import { connect, sendMsg } from "../../api";
-import chatStore, { RootStoreContext } from "../../stores/ChatStore";
+import React, { useContext, useEffect } from "react";
+import { ChatHistory, ChatInput } from "./../";
 import { observer } from "mobx-react-lite";
-import { StoreContext } from "../../stores/StoreContext";
-
+import { StoreContext } from "../../stores/ChatStore";
 export const ChatPage = observer(() => {
   const chatStore = useContext(StoreContext);
-  const {
-    username,
-    addMessage,
-    setCurrentMessage,
-    messages,
-    initializeSocket,
-  } = chatStore;
+  if (!chatStore) {
+    throw new Error("StoreContext must be used within a StoreContext.Provider");
+  }
+  const { username, addMessage, messages, initializeSocket } = chatStore;
   useEffect(() => {
     initializeSocket();
   }, []);
 
   const send = (event: any) => {
-    if (event.keyCode === 13 && username) {
+    if (event.keyCode === 13) {
       addMessage(event.target.value);
       event.target.value = "";
     }

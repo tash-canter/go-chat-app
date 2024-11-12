@@ -1,23 +1,53 @@
-import { action, makeAutoObservable, observable } from "mobx";
+import { makeAutoObservable } from "mobx";
 import { createContext } from "react";
+import { jwtDecode, JwtPayload } from "jwt-decode";
 
 export type Message = {
   body: string;
   username: string;
-  timeStamp: string;
+  timestamp: string;
+  userId: Number;
 };
+
+interface CustomJwtPayload extends JwtPayload {
+  username?: string;
+  userId?: Number;
+}
 
 class ChatStore {
   messages: Message[] = [];
-  currentMessage: string = "";
   socket: WebSocket | null = null;
   username: string = "";
+  userId: Number | null = null;
   password: string = "";
   jwt: string | null = null;
+  isLoggedIn = false;
 
   constructor() {
     makeAutoObservable(this);
-    this.loadToken();
+    this.initializeUser();
+  }
+
+  initializeUser() {
+    const token = localStorage.getItem("jwt");
+    if (token) {
+      this.jwt = token;
+      try {
+        const decoded = jwtDecode<CustomJwtPayload>(token);
+        const expiration = decoded.exp ? decoded.exp * 1000 : 0; // Convert to milliseconds
+
+        if (Date.now() < expiration) {
+          this.username = decoded.username || ""; // assuming "username" is in the payload
+          this.userId = decoded.userId || null;
+          this.isLoggedIn = true;
+        } else {
+          localStorage.removeItem("jwtToken"); // Remove expired token
+        }
+      } catch (error) {
+        console.error("Failed to decode JWT:", error);
+        localStorage.removeItem("jwtToken");
+      }
+    }
   }
 
   setToken = (token: string) => {
@@ -25,29 +55,30 @@ class ChatStore {
     localStorage.setItem("jwt", token); // Persist the token
   };
 
-  loadToken() {
-    const token = localStorage.getItem("jwt");
-    if (token) {
-      this.jwt = token; // Load the token into the store
-    }
-  }
-
   clearToken() {
     this.jwt = null;
     localStorage.removeItem("jwt"); // Remove the token from storage
   }
 
+  setIsLoggedIn = (isLoggedIn: boolean) => {
+    this.isLoggedIn = isLoggedIn;
+  };
+
   // Initialize WebSocket connection
   initializeSocket = () => {
-    this.socket = new WebSocket("ws://localhost:8080/ws");
+    this.socket = new WebSocket(`ws://localhost:8081/ws?token=${this.jwt}`);
 
     this.socket.onmessage = (event: MessageEvent) => {
       const receivedMessage = JSON.parse(event.data) as Message;
-      this.messages.push({
-        body: receivedMessage.body,
-        username: receivedMessage.username,
-        timeStamp: new Date().toLocaleTimeString(),
-      });
+      this.messages = [
+        ...this.messages,
+        {
+          body: receivedMessage.body,
+          username: receivedMessage.username,
+          userId: receivedMessage.userId,
+          timestamp: new Date().toLocaleTimeString(),
+        },
+      ];
     };
 
     this.socket.onclose = (event) => {
@@ -60,24 +91,18 @@ class ChatStore {
   };
 
   // Add a new message and send it to the WebSocket server
-  addMessage(message: string) {
-    const msgObj: Message = {
-      body: message,
-      username: this.username,
-      timeStamp: new Date().toLocaleTimeString(),
-    };
+  addMessage = (message: string) => {
+    if (this.userId && this.socket) {
+      const msgObj: Message = {
+        body: message,
+        username: this.username,
+        timestamp: new Date().toLocaleTimeString(),
+        userId: this.userId,
+      };
 
-    if (this.socket) {
       this.socket.send(JSON.stringify(msgObj));
     }
-    this.messages.push(msgObj); // Add to the local store
-    this.currentMessage = ""; // Clear current message
-  }
-
-  // Set the current message being typed
-  setCurrentMessage(message: string) {
-    this.currentMessage = message;
-  }
+  };
 
   setUsername = (username: string) => {
     this.username = username;
@@ -91,9 +116,4 @@ class ChatStore {
 const chatStore = new ChatStore();
 export default chatStore;
 
-export type RootStoreType = {
-  chatStore: ChatStore;
-};
-
-// Create context with default value
-export const RootStoreContext = createContext<RootStoreType | null>(null);
+export const StoreContext = createContext<ChatStore | null>(null);

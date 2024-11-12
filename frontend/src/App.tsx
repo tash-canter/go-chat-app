@@ -1,17 +1,14 @@
-import React, { createContext } from "react";
+import React, { useContext, useEffect } from "react";
 import "./App.css";
 import { Header } from "./components/";
-import { ThemeProvider } from "styled-components";
-import { theme } from "./theme";
-import { Route, Routes } from "react-router-dom";
+import { Route, Routes, useNavigate } from "react-router-dom";
 import { LoginPage, ChatPage, RegisterPage } from "./components";
-import { StoreContext } from "./stores/StoreContext";
+import { StoreContext } from "./stores/ChatStore";
 import chatStore from "./stores/ChatStore";
 
 const App = () => {
   return (
     <StoreContext.Provider value={chatStore}>
-      {/* <div>HELLO</div> */}
       <div className="App">
         <Header />
         <Routes>

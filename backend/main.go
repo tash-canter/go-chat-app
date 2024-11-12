@@ -7,6 +7,7 @@ import (
 
 	"log"
 
+	"github.com/golang-jwt/jwt"
 	"github.com/golang-migrate/migrate/v4"
 	"github.com/golang-migrate/migrate/v4/database/postgres"
 	_ "github.com/golang-migrate/migrate/v4/source/file"
@@ -18,6 +19,29 @@ import (
 )
 
 func serveWs(pool *websocket.Pool, w http.ResponseWriter, r *http.Request) {
+	// Step 1: Extract the JWT from the query parameter
+	tokenString := r.URL.Query().Get("token")
+	if tokenString == "" {
+		http.Error(w, "Token required", http.StatusUnauthorized)
+		return
+	}
+	// Step 2: Parse and validate the JWT
+	claims := &userAuthentication.Claims{}
+	token, err := jwt.ParseWithClaims(tokenString, claims, func(token *jwt.Token) (interface{}, error) {
+		// Validate the signing method if desired
+		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
+		}
+		return userAuthentication.JwtKey, nil
+	})
+	if err != nil || !token.Valid {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+
+	username := claims.Username
+	fmt.Printf("User '%s' connected with valid JWT\n", username)
+
 	conn, err := websocket.Upgrade(w, r)
 	if err != nil {
 		fmt.Fprintf(w, "%+V\n", err)
@@ -25,19 +49,18 @@ func serveWs(pool *websocket.Pool, w http.ResponseWriter, r *http.Request) {
 	client := &websocket.Client{
 		Conn: conn,
 		Pool: pool,
+		Username: username,
 	}
 
 	pool.Register <- client
 	client.Read()
 }
 
-func setupRoutes() {
+func setupWebsocket(w http.ResponseWriter, r *http.Request) {
 	pool := websocket.NewPool()
 	go pool.Start()
 
-	http.HandleFunc("/ws", func(w http.ResponseWriter, r *http.Request) {
-		serveWs(pool, w, r)
-	})
+	serveWs(pool, w, r)
 }
 
 func migrateDb() {
@@ -100,11 +123,26 @@ func main() {
 	mux := http.NewServeMux()
 
 	migrateDb()
-	setupRoutes()
 	userAuthentication.InitDb()
+
 	mux.HandleFunc("/api/login", handlers.LoginHandler)
 	mux.HandleFunc("/api/register", userAuthentication.RegisterUser)
-	handler := corsMiddleware(mux)
-	http.ListenAndServe(":8080", handler)
+
+	go func() {
+        log.Println("Starting HTTP server on :8080")
+		handler := corsMiddleware(mux)
+		err := http.ListenAndServe(":8080", handler)
+        if err != nil {
+            log.Fatalf("HTTP server error: %v", err)
+        }
+    }()
+
+	http.HandleFunc("/ws", setupWebsocket)
+	log.Println("Starting WebSocket server on :8081")
+    err := http.ListenAndServe(":8081", nil)
+    if err != nil {
+        log.Fatalf("WebSocket server error: %v", err)
+    }
+
 	defer userAuthentication.Db.Close()
 }
