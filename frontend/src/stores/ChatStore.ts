@@ -90,6 +90,9 @@ class ChatStore {
 
   // Initialize WebSocket connection
   initializeSocket = () => {
+    if (!this.jwt) {
+      this.setIsLoggedIn(false);
+    }
     this.socket = new WebSocket(`ws://localhost:8081/ws?token=${this.jwt}`);
 
     this.socket.onmessage = (event: MessageEvent) => {

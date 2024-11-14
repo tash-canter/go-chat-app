@@ -9,7 +9,14 @@ export const RegisterPage = observer(() => {
   if (!chatStore) {
     throw new Error("StoreContext must be used within a StoreContext.Provider");
   }
-  const { username, password, setPassword, setUsername, setToken } = chatStore;
+  const {
+    username,
+    password,
+    setPassword,
+    setUsername,
+    setToken,
+    setIsLoggedIn,
+  } = chatStore;
   const [error, setError] = useState(null);
   const navigate = useNavigate();
 
@@ -36,6 +43,7 @@ export const RegisterPage = observer(() => {
 
       setToken(data.jwt);
 
+      setIsLoggedIn(true);
       navigate("/chat");
     } catch (err: any) {
       setError(err.message);

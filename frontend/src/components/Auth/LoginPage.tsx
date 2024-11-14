@@ -19,8 +19,10 @@ export const LoginPage = observer(() => {
     setUsername,
     setToken,
     hydrateMessages,
+    setIsLoggedIn,
   } = chatStore;
 
+  console.log("LOGIN");
   useEffect(() => {
     if (isLoggedIn) {
       navigate("/chat");
@@ -49,6 +51,7 @@ export const LoginPage = observer(() => {
 
       setToken(data.jwt);
 
+      setIsLoggedIn(true);
       hydrateMessages();
       navigate("/chat");
     } catch (err: any) {
