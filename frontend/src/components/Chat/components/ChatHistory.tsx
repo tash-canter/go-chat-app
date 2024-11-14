@@ -1,7 +1,6 @@
 import React from "react";
-import styled from "styled-components";
-import { SpeechBubble } from "../SpeechBubble";
-import { Message } from "../../stores/ChatStore";
+import { Message } from "../../../stores/ChatStore";
+import { SpeechBubble } from "./SpeechBubble";
 
 interface ChatHistoryProps {
   chatHistory: Message[];

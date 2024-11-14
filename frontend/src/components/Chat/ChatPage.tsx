@@ -1,7 +1,8 @@
 import React, { useContext, useEffect } from "react";
-import { ChatHistory, ChatInput } from "./../";
 import { observer } from "mobx-react-lite";
 import { StoreContext } from "../../stores/ChatStore";
+import { ChatHistory, ChatInput } from "./components";
+
 export const ChatPage = observer(() => {
   const chatStore = useContext(StoreContext);
   if (!chatStore) {
@@ -16,6 +17,7 @@ export const ChatPage = observer(() => {
     if (event.keyCode === 13) {
       addMessage(event.target.value);
       event.target.value = "";
+      console.log("SENDING");
     }
   };
 

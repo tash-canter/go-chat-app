@@ -22,6 +22,8 @@ class ChatStore {
   password: string = "";
   jwt: string | null = null;
   isLoggedIn = false;
+  isLoading = false;
+  error: string | null = null;
 
   constructor() {
     makeAutoObservable(this);
@@ -40,6 +42,7 @@ class ChatStore {
           this.username = decoded.username || ""; // assuming "username" is in the payload
           this.userId = decoded.userId || null;
           this.isLoggedIn = true;
+          this.hydrateMessages();
         } else {
           localStorage.removeItem("jwtToken"); // Remove expired token
         }
@@ -49,6 +52,27 @@ class ChatStore {
       }
     }
   }
+
+  hydrateMessages = async () => {
+    this.isLoading = true;
+    try {
+      const response = await fetch(
+        "http://localhost:8080/api/hydrateMessages",
+        {
+          method: "GET",
+          headers: {
+            Authorization: `Bearer ${this.jwt}`, // Pass JWT as a Bearer token in the Authorization header
+          },
+        }
+      );
+      const data = await response.json();
+      this.messages = data.messages; // Assuming the backend returns an array of messages
+    } catch (error) {
+      this.error = "Error loading messages";
+    } finally {
+      this.isLoading = false;
+    }
+  };
 
   setToken = (token: string) => {
     this.jwt = token;

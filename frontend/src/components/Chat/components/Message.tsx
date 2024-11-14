@@ -1,18 +1,17 @@
 import React from "react";
 import styled from "styled-components";
-import { Message as MessageInterface } from "../../api";
+import { Message as MessageInterface } from "../../../api";
 
 interface MessageProps {
-    message: MessageInterface
+  message: MessageInterface;
 }
 
-export const Message = ({message}: MessageProps) => {
-    const json = JSON.parse(message.body)
-    console.log("HERE", json)
-    return <StyledMessage className="Message">{json.body}</StyledMessage>;
-}
+export const Message = ({ message }: MessageProps) => {
+  const json = JSON.parse(message.body);
+  return <StyledMessage className="Message">{json.body}</StyledMessage>;
+};
 
-const StyledMessage = styled('div')`
+const StyledMessage = styled("div")`
   display: block;
   background-color: white;
   margin: 10px auto;
@@ -26,5 +25,5 @@ const StyledMessage = styled('div')`
     float: right;
     background-color: #328ec4;
   }
-  text-align: left
+  text-align: left;
 `;

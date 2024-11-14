@@ -1,6 +1,6 @@
 import styled from "styled-components";
 import React from "react";
-import { Message } from "../../api";
+import { Message } from "../../../api";
 
 interface SpeechBubble extends Message {
   currUsername: string;

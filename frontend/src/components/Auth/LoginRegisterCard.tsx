@@ -3,49 +3,29 @@ import { Link, useNavigate } from "react-router-dom";
 import { observer } from "mobx-react-lite";
 import { StoreContext } from "../../stores/ChatStore";
 
-export const RegisterPage = observer(() => {
-  const chatStore = useContext(StoreContext);
-  if (!chatStore) {
-    throw new Error("StoreContext must be used within a StoreContext.Provider");
-  }
-  const { username, password, setPassword, setUsername, setToken } = chatStore;
-  const [error, setError] = useState(null);
-  const navigate = useNavigate();
-
-  // Perform registration logic
-  const handleSubmit = async (e: any) => {
-    e.preventDefault();
-    try {
-      const response = await fetch("http://localhost:8080/api/register", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          username: username,
-          password: password,
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error("Login failed! Please check your credentials.");
-      }
-
-      const data = await response.json();
-
-      setToken(data.jwt);
-
-      navigate("/");
-    } catch (err: any) {
-      setError(err.message);
-    }
-  };
-
+interface LoginRegisterCardProps {
+  onSubmit: (e: any) => Promise<void>;
+  isLogin: boolean;
+  username: string;
+  setUsername: (username: string) => void;
+  password: string;
+  setPassword: (password: string) => void;
+  error: any;
+}
+export const LoginRegisterCard = ({
+  onSubmit,
+  isLogin,
+  username,
+  setUsername,
+  password,
+  setPassword,
+  error,
+}: LoginRegisterCardProps) => {
   return (
     <div style={styles.container}>
       <div style={styles.formWrapper}>
-        <h2 style={styles.heading}>Register</h2>
-        <form onSubmit={handleSubmit} style={styles.form}>
+        <h2 style={styles.heading}>{isLogin ? "Welcome Back" : "Register"}</h2>
+        <form onSubmit={onSubmit} style={styles.form}>
           <div style={styles.inputGroup}>
             <label htmlFor="username" style={styles.label}>
               Username
@@ -76,19 +56,19 @@ export const RegisterPage = observer(() => {
           </div>
           {error && <p style={styles.error}>{error}</p>}
           <button type="submit" style={styles.button}>
-            Register
+            {isLogin ? "Login" : "Register"}
           </button>
         </form>
         <p style={styles.register}>
-          Already have an account?{" "}
-          <Link to="/" style={styles.link}>
-            Login
+          {isLogin ? "Don't have an account? " : "Already have an account? "}
+          <Link to={isLogin ? "/register" : "/"} style={styles.link}>
+            {isLogin ? "Register" : "Login"}
           </Link>
         </p>
       </div>
     </div>
   );
-});
+};
 
 const styles: { [key: string]: React.CSSProperties } = {
   container: {

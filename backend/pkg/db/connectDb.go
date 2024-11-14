@@ -1,19 +1,9 @@
-package userAuthentication
+package db
 
 import (
 	"database/sql"
 	"log"
 )
-
-type User struct {
-    ID       uint   `json:"id"`
-    Username string `json:"username"`
-    Password string `json:"-"`
-}
-
-type RegisterResponse struct {
-    JWT string `json:"jwt"`
-}
 
 var Db *sql.DB
 

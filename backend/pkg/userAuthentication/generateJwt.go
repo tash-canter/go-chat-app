@@ -6,16 +6,20 @@ import (
 	"github.com/dgrijalva/jwt-go"
 )
 
+type RegisterResponse struct {
+    JWT string `json:"jwt"`
+}
+
 var JwtKey = []byte("your_secret_key") // Use a secure, secret key
 
 type Claims struct {
     Username string `json:"username"`
-    UserId   int    `json:"userId"`
+    UserId   uint   `json:"userId"`
     jwt.StandardClaims
 }
 
 // Generate a new JWT token
-func GenerateJWT(username string, userId int) (string, error) {
+func GenerateJWT(username string, userId uint) (string, error) {
     expirationTime := time.Now().Add(24 * time.Hour)
     claims := &Claims{
         Username: username,

@@ -3,7 +3,7 @@ package websocket
 import (
 	"fmt"
 
-	"github.com/tash-canter/go-chat-app/backend/pkg/userAuthentication"
+	"github.com/tash-canter/go-chat-app/backend/pkg/services"
 )
 
 type Pool struct {
@@ -13,24 +13,13 @@ type Pool struct {
 	Broadcast  chan Message
 }
 
-func NewPool() *Pool {
+func newPool() *Pool {
 	return &Pool{
 		Register:   make(chan *Client),
 		Unregister: make(chan *Client),
 		Clients:    make(map[*Client]bool),
 		Broadcast:  make(chan Message),
 	}
-}
-
-func saveMessage(userId int, message string) error {
-	// Insert message into the database
-	println("Saving message id", userId)
-	sql := `INSERT INTO messages (user_id, content) VALUES ($1, $2)`
-	_, err := userAuthentication.Db.Exec(sql, userId, message)
-	if err != nil {
-		return fmt.Errorf("failed to insert message into db: %v", err)
-	}
-	return nil
 }
 
 
@@ -41,7 +30,6 @@ func (pool *Pool) Start() {
 			pool.Clients[client] = true
 			fmt.Println("Size of Connection Pool: ", len(pool.Clients))
 			for client := range pool.Clients {
-				fmt.Println(client)
 				client.Conn.WriteJSON(Message{Type: 1, Body: "User Joined the chat...", Username: client.Username})
 			}
 		case client := <-pool.Unregister:
@@ -57,8 +45,7 @@ func (pool *Pool) Start() {
 					fmt.Println(err)
 					return
 				}
-				
-				if err := saveMessage(message.UserId, message.Body); err != nil {
+				if err := services.SaveMessage(message.UserId, message.Body); err != nil {
 					fmt.Println("Error saving message:", err)
 					return
 				}
