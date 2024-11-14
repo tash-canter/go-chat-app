@@ -4,20 +4,29 @@ import { Message } from "../../../api";
 
 interface SpeechBubble extends Message {
   currUsername: string;
+  timestamp: string;
 }
 export const SpeechBubble = ({
   username,
   body,
   currUsername,
+  timestamp,
 }: SpeechBubble) => {
   const isFromUser = currUsername === username;
   console.log(isFromUser);
   const styles = getStyles({ isFromUser });
+
+  const formattedTimestamp = new Date(timestamp).toLocaleTimeString([], {
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+
   return (
     <div style={styles.messageWrapper}>
       <div style={styles.speechBubble}>
         <div style={styles.username}>{username}</div>
         <div style={styles.message}>{body}</div>
+        <div style={styles.timestamp}>{formattedTimestamp}</div>
       </div>
     </div>
   );
@@ -49,6 +58,12 @@ const getStyles = ({
   message: {
     fontSize: "14px", // Corrected font-size to fontSize
     textAlign: "left", // Corrected text-align syntax
+  },
+  timestamp: {
+    fontSize: "12px",
+    textAlign: "right",
+    color: isFromUser ? "lightgrey" : "darkgrey",
+    marginTop: "5px",
   },
   messageWrapper: {
     display: "flex", // Corrected display property

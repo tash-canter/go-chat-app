@@ -100,7 +100,7 @@ class ChatStore {
           body: receivedMessage.body,
           username: receivedMessage.username,
           userId: receivedMessage.userId,
-          timestamp: new Date().toLocaleTimeString(),
+          timestamp: receivedMessage.timestamp,
         },
       ];
     };
@@ -120,7 +120,7 @@ class ChatStore {
       const msgObj: Message = {
         body: message,
         username: this.username,
-        timestamp: new Date().toLocaleTimeString(),
+        timestamp: new Date().toISOString(),
         userId: this.userId,
       };
 

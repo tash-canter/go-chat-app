@@ -2,6 +2,7 @@ package websocket
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/tash-canter/go-chat-app/backend/pkg/services"
 )
@@ -30,7 +31,7 @@ func (pool *Pool) Start() {
 			pool.Clients[client] = true
 			fmt.Println("Size of Connection Pool: ", len(pool.Clients))
 			for client := range pool.Clients {
-				client.Conn.WriteJSON(Message{Type: 1, Body: "User Joined the chat...", Username: client.Username})
+				client.Conn.WriteJSON(Message{Type: 1, Body: "User Joined the chat...", Username: client.Username, Timestamp: time.Now().Format(time.RFC3339)})
 			}
 		case client := <-pool.Unregister:
 			delete(pool.Clients, client)

@@ -15,6 +15,7 @@ export const ChatHistory = ({ chatHistory, username }: ChatHistoryProps) => {
         body={msg.body}
         username={msg.username}
         currUsername={username}
+        timestamp={msg.timestamp}
       />
     );
   });
