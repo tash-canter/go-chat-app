@@ -1,6 +1,10 @@
 package websocket
 
-import "fmt"
+import (
+	"fmt"
+
+	"github.com/tash-canter/go-chat-app/backend/pkg/services"
+)
 
 type Pool struct {
 	Register   chan *Client
@@ -9,7 +13,7 @@ type Pool struct {
 	Broadcast  chan Message
 }
 
-func NewPool() *Pool {
+func newPool() *Pool {
 	return &Pool{
 		Register:   make(chan *Client),
 		Unregister: make(chan *Client),
@@ -18,6 +22,7 @@ func NewPool() *Pool {
 	}
 }
 
+
 func (pool *Pool) Start() {
 	for {
 		select {
@@ -25,22 +30,23 @@ func (pool *Pool) Start() {
 			pool.Clients[client] = true
 			fmt.Println("Size of Connection Pool: ", len(pool.Clients))
 			for client := range pool.Clients {
-				fmt.Println(client)
-				client.Conn.WriteJSON(Message{Type: 1, Body: "New User Joined..."})
+				client.Conn.WriteJSON(Message{Type: 1, Body: "User Joined the chat...", Username: client.Username})
 			}
-			break
 		case client := <-pool.Unregister:
 			delete(pool.Clients, client)
 			fmt.Println("Size of Connection Pool: ", len(pool.Clients))
 			for client := range pool.Clients {
-				client.Conn.WriteJSON(Message{Type: 1, Body: "User Disconnected..."})
+				client.Conn.WriteJSON(Message{Type: 1, Body: "User Disconnected...", Username: client.Username})
 			}
-			break
 		case message := <-pool.Broadcast:
 			fmt.Println("Sending message to all clients in Pool")
 			for client := range pool.Clients {
 				if err := client.Conn.WriteJSON(message); err != nil {
 					fmt.Println(err)
+					return
+				}
+				if err := services.SaveMessage(message.UserId, message.Body); err != nil {
+					fmt.Println("Error saving message:", err)
 					return
 				}
 			}
