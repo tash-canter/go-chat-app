@@ -16,6 +16,7 @@ export const RegisterPage = observer(() => {
     setUsername,
     setToken,
     setIsLoggedIn,
+    setUserId,
   } = chatStore;
   const [error, setError] = useState(null);
   const navigate = useNavigate();
@@ -42,6 +43,7 @@ export const RegisterPage = observer(() => {
       const data = await response.json();
 
       setToken(data.jwt);
+      setUserId(data.userId);
 
       setIsLoggedIn(true);
       navigate("/chat");

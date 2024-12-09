@@ -9,15 +9,15 @@ import (
 	"github.com/tash-canter/go-chat-app/backend/pkg/userAuthentication"
 )
 
-func HydratePrivateMessagesHandler(w http.ResponseWriter, r *http.Request) {
+func SearchUsersHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method == http.MethodGet {
 		tokenString := middleware.ExtractTokenFromHeader(r)
-		jwtClaims, err := userAuthentication.ValidateJWT(tokenString)
+		_, err := userAuthentication.ValidateJWT(tokenString)
 		if err != nil {
 			fmt.Println(err)
 			return
 		}
-		err = services.HydratePrivateMessages(w, r, *jwtClaims)
+		err = services.SearchUsers(w, r)
 		if err != nil {
 			fmt.Println(err)
 		}

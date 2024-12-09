@@ -7,23 +7,24 @@ import (
 )
 
 type RegisterResponse struct {
-    JWT string `json:"jwt"`
+    JWT         string  `json:"jwt"`
+    UserId      uint    `json:"userId"`
 }
 
 var JwtKey = []byte("your_secret_key") // Use a secure, secret key
 
 type Claims struct {
-    Username string `json:"username"`
-    UserId   uint   `json:"userId"`
+    UserId      uint    `json:"userId"`
+    Username    string  `json:"username"`
     jwt.StandardClaims
 }
 
 // Generate a new JWT token
-func GenerateJWT(username string, userId uint) (string, error) {
+func GenerateJWT(userId uint, username string) (string, error) {
     expirationTime := time.Now().Add(24 * time.Hour)
     claims := &Claims{
-        Username: username,
         UserId: userId,
+        Username: username,
         StandardClaims: jwt.StandardClaims{
             ExpiresAt: expirationTime.Unix(),
         },

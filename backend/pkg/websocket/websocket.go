@@ -15,6 +15,13 @@ var upgrader = websocket.Upgrader{
 	CheckOrigin:     func(r *http.Request) bool { return true },
 }
 
+var pool *Pool
+
+func init() {
+	pool = newPool()
+	go pool.Start()
+}
+
 func upgrade(w http.ResponseWriter, r *http.Request) (*websocket.Conn, error) {
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
@@ -32,12 +39,13 @@ func serveWs(pool *Pool, w http.ResponseWriter, r *http.Request) {
 
 	conn, err := upgrade(w, r)
 	if err != nil {
-		fmt.Println(err)
+		fmt.Println(err, "Error upgrading")
 	}
+	fmt.Println("new websocket", jwtClaims.Id)
 	client := &Client{
 		Conn: conn,
 		Pool: pool,
-		Username: jwtClaims.Username,
+		userId: jwtClaims.UserId, 
 	}
 
 	pool.Register <- client
@@ -45,8 +53,5 @@ func serveWs(pool *Pool, w http.ResponseWriter, r *http.Request) {
 }
 
 func SetupWebsocket(w http.ResponseWriter, r *http.Request) {
-	pool := newPool()
-	go pool.Start()
-
 	serveWs(pool, w, r)
 }
