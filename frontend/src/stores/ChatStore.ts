@@ -49,7 +49,7 @@ class ChatStore {
           this.username = decoded.username || ""; // assuming "username" is in the payload
           this.userId = decoded.userId || null;
           this.isLoggedIn = true;
-          this.hydrateMessages();
+          this.hydratePrivateMessages();
         } else {
           localStorage.removeItem("jwtToken"); // Remove expired token
         }
@@ -60,11 +60,11 @@ class ChatStore {
     }
   }
 
-  hydrateMessages = async () => {
+  hydratePrivateMessages = async () => {
     this.isLoading = true;
     try {
       const response = await fetch(
-        `http://localhost:8080/api/hydrateMessages?recipient_id=${this.recipientId}`,
+        `http://localhost:8080/api/hydratePrivateMessages?recipient_id=${this.recipientId}`,
         {
           method: "GET",
           headers: {

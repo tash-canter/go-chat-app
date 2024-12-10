@@ -18,7 +18,6 @@ export const LoginPage = observer(() => {
     setPassword,
     setUsername,
     setToken,
-    hydrateMessages,
     setIsLoggedIn,
     setUserId,
   } = chatStore;
@@ -53,7 +52,6 @@ export const LoginPage = observer(() => {
       setUserId(data.userId);
 
       setIsLoggedIn(true);
-      // hydrateMessages();
       navigate("/chat");
     } catch (err: any) {
       setError(err.message);

@@ -22,7 +22,7 @@ func main() {
 
 	mux.HandleFunc("/api/login", handlers.LoginHandler)
 	mux.HandleFunc("/api/register", handlers.RegisterHandler)
-	mux.HandleFunc("/api/hydrateMessages", handlers.HydratePrivateMessagesHandler)
+	mux.HandleFunc("/api/hydratePrivateMessages", handlers.HydratePrivateMessagesHandler)
 	mux.HandleFunc("/api/searchUsers", handlers.SearchUsersHandler)
 
 	go func() {
