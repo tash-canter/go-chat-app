@@ -21,6 +21,7 @@ export const ChatPage = observer(() => {
     setRecipientDetails,
     recipientId,
     recipientUsername,
+    hydrateMessages,
   } = chatStore;
   const navigate = useNavigate();
   const [query, setQuery] = useState("");
@@ -76,6 +77,7 @@ export const ChatPage = observer(() => {
 
   const handleSelectUser = (id: Number, username: string) => {
     setRecipientDetails(id, username);
+    hydrateMessages();
   };
 
   return (

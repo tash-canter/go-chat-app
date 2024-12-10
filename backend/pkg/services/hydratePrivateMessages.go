@@ -15,15 +15,15 @@ type PriavteMessageResponse struct {
 
 // Register new user
 func HydratePrivateMessages(w http.ResponseWriter, r *http.Request, jwtClaims userAuthentication.Claims) error {
-    senderID := r.URL.Query().Get("user_id")
+    senderID := jwtClaims.UserId
     recipientID := r.URL.Query().Get("recipient_id")
 
-    if senderID == "" || recipientID == "" {
-        http.Error(w, "user_id and recipient_id query parameters are required", http.StatusBadRequest)
+    if recipientID == "" {
+        http.Error(w, "recipient_id query parameters are required", http.StatusBadRequest)
         return fmt.Errorf("missing required query parameters")
     }
     rows, err := db.Db.Query(`
-        SELECT user_id, recipient_id, username, content, created_at
+        SELECT user_id, recipient_id, username, content, private_messages.created_at
         FROM private_messages
         JOIN users ON private_messages.user_id = users.id
         WHERE 

@@ -33,13 +33,11 @@ func (pool *Pool) Start() {
 			pool.mu.Lock()
 			pool.Clients[client.userId] = client
 			pool.mu.Unlock()
-			fmt.Println("Registering", client.userId, pool.Clients)
 			fmt.Println("Size of Connection Pool: ", len(pool.Clients))
 		case client := <-pool.Unregister:
 			pool.mu.Lock()
 			delete(pool.Clients, client.userId)
 			pool.mu.Unlock()
-			fmt.Println("Deleting", client.userId)
 			fmt.Println("Size of Connection Pool: ", len(pool.Clients))
 		case message := <-pool.Broadcast:
 			if message.GroupName != "" {
@@ -50,7 +48,6 @@ func (pool *Pool) Start() {
                 fmt.Printf("Broadcasting to group: %s\n", message.GroupName)
                 pool.BroadcastToGroup(message)
             } else if message.RecipientUsername != "" {
-                // Private message
                 fmt.Printf("Routing private message to: %s\n", message.RecipientUsername)
 				if err := services.SavePrivateMessage(message.UserId, message.RecipientId, message.Body); err != nil {
 					fmt.Println("Error saving message:", err)

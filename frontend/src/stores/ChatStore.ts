@@ -64,7 +64,7 @@ class ChatStore {
     this.isLoading = true;
     try {
       const response = await fetch(
-        "http://localhost:8080/api/hydrateMessages",
+        `http://localhost:8080/api/hydrateMessages?recipient_id=${this.recipientId}`,
         {
           method: "GET",
           headers: {
@@ -73,7 +73,7 @@ class ChatStore {
         }
       );
       const data = await response.json();
-      this.messages = data.messages; // Assuming the backend returns an array of messages
+      this.messages = data.privateMessages; // Assuming the backend returns an array of messages
     } catch (error) {
       this.error = "Error loading messages";
     } finally {
@@ -102,12 +102,10 @@ class ChatStore {
     }
     if (!this.socketInitialised) {
       this.socketInitialised = true;
-      console.log("INITIALISNG SOCKET", this.userId);
       this.socket = new WebSocket(`ws://localhost:8081/ws?token=${this.jwt}`);
 
       this.socket.onmessage = (event: MessageEvent) => {
         const receivedMessage = JSON.parse(event.data) as Message;
-        console.log("MESSAGE", receivedMessage);
         this.messages = [
           ...this.messages,
           {

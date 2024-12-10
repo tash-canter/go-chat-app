@@ -41,7 +41,7 @@ func serveWs(pool *Pool, w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		fmt.Println(err, "Error upgrading")
 	}
-	fmt.Println("new websocket", jwtClaims.Id)
+
 	client := &Client{
 		Conn: conn,
 		Pool: pool,
