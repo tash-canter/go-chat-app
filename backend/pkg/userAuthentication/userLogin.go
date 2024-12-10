@@ -39,7 +39,7 @@ func LoginUser(w http.ResponseWriter, r *http.Request) error {
     }
 
     // Generate a JWT token
-    token, err := GenerateJWT(storedUser.Username, storedUser.UserID)
+    token, err := GenerateJWT(storedUser.UserID, storedUser.Username)
     if err != nil {
         http.Error(w, "Could not generate token", http.StatusInternalServerError)
         return err
@@ -47,6 +47,6 @@ func LoginUser(w http.ResponseWriter, r *http.Request) error {
 
     // Return the token as JSON
     w.Header().Set("Content-Type", "application/json")
-    json.NewEncoder(w).Encode(RegisterResponse{JWT: token})
+    json.NewEncoder(w).Encode(RegisterResponse{JWT: token, UserId: storedUser.UserID})
     return nil
 }

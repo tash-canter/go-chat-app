@@ -5,9 +5,14 @@ import { SpeechBubble } from "./SpeechBubble";
 interface ChatHistoryProps {
   chatHistory: Message[];
   username: string;
+  recipientUsername: string;
 }
 
-export const ChatHistory = ({ chatHistory, username }: ChatHistoryProps) => {
+export const ChatHistory = ({
+  chatHistory,
+  username,
+  recipientUsername,
+}: ChatHistoryProps) => {
   const messages = chatHistory.map((msg, index) => {
     return (
       <SpeechBubble
@@ -23,7 +28,10 @@ export const ChatHistory = ({ chatHistory, username }: ChatHistoryProps) => {
   return (
     <div style={styles.chatHistory}>
       <h2 style={styles.h2}>
-        Welcome to the chat room {username}. Type your messages below.
+        Welcome to the chat room {username}.{" "}
+        {recipientUsername
+          ? `You are now chatting with ${recipientUsername}. Type your messages below.`
+          : ""}
       </h2>
       {messages}
     </div>

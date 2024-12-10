@@ -33,7 +33,7 @@ func RegisterUser(w http.ResponseWriter, r *http.Request) error {
         return err
     }
 
-    token, err := GenerateJWT(user.Username, user.UserID)
+    token, err := GenerateJWT(user.UserID, user.Username)
     if err != nil {
         http.Error(w, "Failed to generate JWT", http.StatusInternalServerError)
         return err
@@ -41,6 +41,6 @@ func RegisterUser(w http.ResponseWriter, r *http.Request) error {
 
     // Respond with the JWT
     w.WriteHeader(http.StatusOK)
-    json.NewEncoder(w).Encode(RegisterResponse{JWT: token})
+    json.NewEncoder(w).Encode(RegisterResponse{JWT: token, UserId: user.UserID})
     return nil
 }

@@ -7,6 +7,10 @@ export type Message = {
   username: string;
   timestamp: string;
   userId: Number;
+  recipientId: Number | null;
+  recipientUsername: string;
+  // groupId: Number;
+  // groupName: string;
 };
 
 interface CustomJwtPayload extends JwtPayload {
@@ -19,15 +23,18 @@ class ChatStore {
   socket: WebSocket | null = null;
   username: string = "";
   userId: Number | null = null;
+  recipientUsername: string = "";
+  recipientId: Number | null = null;
   password: string = "";
   jwt: string | null = null;
   isLoggedIn = false;
   isLoading = false;
   error: string | null = null;
+  socketInitialised: boolean = false;
 
   constructor() {
     makeAutoObservable(this);
-    this.initializeUser();
+    // this.initializeUser();
   }
 
   initializeUser() {
@@ -42,7 +49,7 @@ class ChatStore {
           this.username = decoded.username || ""; // assuming "username" is in the payload
           this.userId = decoded.userId || null;
           this.isLoggedIn = true;
-          this.hydrateMessages();
+          this.hydratePrivateMessages();
         } else {
           localStorage.removeItem("jwtToken"); // Remove expired token
         }
@@ -53,11 +60,11 @@ class ChatStore {
     }
   }
 
-  hydrateMessages = async () => {
+  hydratePrivateMessages = async () => {
     this.isLoading = true;
     try {
       const response = await fetch(
-        "http://localhost:8080/api/hydrateMessages",
+        `http://localhost:8080/api/hydratePrivateMessages?recipient_id=${this.recipientId}`,
         {
           method: "GET",
           headers: {
@@ -66,7 +73,7 @@ class ChatStore {
         }
       );
       const data = await response.json();
-      this.messages = data.messages; // Assuming the backend returns an array of messages
+      this.messages = data.privateMessages; // Assuming the backend returns an array of messages
     } catch (error) {
       this.error = "Error loading messages";
     } finally {
@@ -93,28 +100,33 @@ class ChatStore {
     if (!this.jwt) {
       this.setIsLoggedIn(false);
     }
-    this.socket = new WebSocket(`ws://localhost:8081/ws?token=${this.jwt}`);
+    if (!this.socketInitialised) {
+      this.socketInitialised = true;
+      this.socket = new WebSocket(`ws://localhost:8081/ws?token=${this.jwt}`);
 
-    this.socket.onmessage = (event: MessageEvent) => {
-      const receivedMessage = JSON.parse(event.data) as Message;
-      this.messages = [
-        ...this.messages,
-        {
-          body: receivedMessage.body,
-          username: receivedMessage.username,
-          userId: receivedMessage.userId,
-          timestamp: receivedMessage.timestamp,
-        },
-      ];
-    };
+      this.socket.onmessage = (event: MessageEvent) => {
+        const receivedMessage = JSON.parse(event.data) as Message;
+        this.messages = [
+          ...this.messages,
+          {
+            body: receivedMessage.body,
+            username: receivedMessage.username,
+            userId: receivedMessage.userId,
+            timestamp: receivedMessage.timestamp,
+            recipientId: receivedMessage.recipientId,
+            recipientUsername: receivedMessage.recipientUsername,
+          },
+        ];
+      };
 
-    this.socket.onclose = (event) => {
-      console.log("Socket Closed Connection: ", event);
-    };
+      this.socket.onclose = (event) => {
+        console.log("Socket Closed Connection: ", event);
+      };
 
-    this.socket.onerror = (error) => {
-      console.log("Socket Error: ", error);
-    };
+      this.socket.onerror = (error) => {
+        console.log("Socket Error: ", error);
+      };
+    }
   };
 
   // Add a new message and send it to the WebSocket server
@@ -125,6 +137,8 @@ class ChatStore {
         username: this.username,
         timestamp: new Date().toISOString(),
         userId: this.userId,
+        recipientId: this.recipientId,
+        recipientUsername: this.recipientUsername,
       };
 
       this.socket.send(JSON.stringify(msgObj));
@@ -133,6 +147,15 @@ class ChatStore {
 
   setUsername = (username: string) => {
     this.username = username;
+  };
+
+  setRecipientDetails = (id: Number, username: string) => {
+    this.recipientId = id;
+    this.recipientUsername = username;
+  };
+
+  setUserId = (id: Number) => {
+    this.userId = id;
   };
 
   setPassword = (password: string) => {

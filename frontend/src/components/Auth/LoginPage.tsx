@@ -18,11 +18,10 @@ export const LoginPage = observer(() => {
     setPassword,
     setUsername,
     setToken,
-    hydrateMessages,
     setIsLoggedIn,
+    setUserId,
   } = chatStore;
 
-  console.log("LOGIN");
   useEffect(() => {
     if (isLoggedIn) {
       navigate("/chat");
@@ -50,9 +49,9 @@ export const LoginPage = observer(() => {
       const data = await response.json();
 
       setToken(data.jwt);
+      setUserId(data.userId);
 
       setIsLoggedIn(true);
-      hydrateMessages();
       navigate("/chat");
     } catch (err: any) {
       setError(err.message);

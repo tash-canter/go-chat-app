@@ -1,10 +1,12 @@
 import styled from "styled-components";
 import React from "react";
-import { Message } from "../../../api";
+import { Message } from "../../../stores/ChatStore";
 
-interface SpeechBubble extends Message {
+interface SpeechBubble {
   currUsername: string;
   timestamp: string;
+  username: string;
+  body: string;
 }
 export const SpeechBubble = ({
   username,
@@ -13,7 +15,6 @@ export const SpeechBubble = ({
   timestamp,
 }: SpeechBubble) => {
   const isFromUser = currUsername === username;
-  console.log(isFromUser);
   const styles = getStyles({ isFromUser });
 
   const formattedTimestamp = new Date(timestamp).toLocaleTimeString([], {
