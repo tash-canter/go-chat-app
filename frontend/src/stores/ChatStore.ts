@@ -1,4 +1,4 @@
-import { makeAutoObservable } from "mobx";
+import { action, makeAutoObservable } from "mobx";
 import { createContext } from "react";
 import { jwtDecode, JwtPayload } from "jwt-decode";
 
@@ -7,10 +7,11 @@ export type Message = {
   username: string;
   timestamp: string;
   userId: Number;
-  recipientId: Number | null;
-  recipientUsername: string;
-  // groupId: Number;
-  // groupName: string;
+  recipientId?: Number;
+  recipientUsername?: string;
+  groupId?: Number;
+  groupName?: string;
+  action?: string;
 };
 
 interface CustomJwtPayload extends JwtPayload {
@@ -23,8 +24,10 @@ class ChatStore {
   socket: WebSocket | null = null;
   username: string = "";
   userId: Number | null = null;
-  recipientUsername: string = "";
-  recipientId: Number | null = null;
+  recipientUsername?: string;
+  recipientId?: Number;
+  groupName?: string;
+  groupId?: Number;
   password: string = "";
   jwt: string | null = null;
   isLoggedIn = false;
@@ -115,8 +118,14 @@ class ChatStore {
             timestamp: receivedMessage.timestamp,
             recipientId: receivedMessage.recipientId,
             recipientUsername: receivedMessage.recipientUsername,
+            groupId: receivedMessage.groupId,
+            groupName: receivedMessage.groupName,
           },
         ];
+        if (!this.recipientId || !this.recipientUsername) {
+          this.recipientId = receivedMessage.userId;
+          this.recipientUsername = receivedMessage.username;
+        }
       };
 
       this.socket.onclose = (event) => {
@@ -130,7 +139,7 @@ class ChatStore {
   };
 
   // Add a new message and send it to the WebSocket server
-  addMessage = (message: string) => {
+  addPrivateMessage = (message: string) => {
     if (this.userId && this.socket) {
       const msgObj: Message = {
         body: message,
@@ -139,6 +148,22 @@ class ChatStore {
         userId: this.userId,
         recipientId: this.recipientId,
         recipientUsername: this.recipientUsername,
+      };
+
+      this.socket.send(JSON.stringify(msgObj));
+    }
+  };
+
+  subscribeToGroup = () => {
+    if (this.socket && this.userId) {
+      const msgObj: Message = {
+        body: "",
+        username: this.username,
+        timestamp: new Date().toISOString(),
+        userId: this.userId,
+        groupId: this.groupId,
+        groupName: this.groupName,
+        action: "subscribe",
       };
 
       this.socket.send(JSON.stringify(msgObj));

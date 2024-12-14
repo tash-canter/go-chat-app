@@ -24,6 +24,7 @@ func main() {
 	mux.HandleFunc("/api/register", handlers.RegisterHandler)
 	mux.HandleFunc("/api/hydratePrivateMessages", handlers.HydratePrivateMessagesHandler)
 	mux.HandleFunc("/api/searchUsers", handlers.SearchUsersHandler)
+	mux.HandleFunc("/api/hydrateConversations", handlers.HydrateConversationsHandler)
 
 	go func() {
         log.Println("Starting HTTP server on :8080")

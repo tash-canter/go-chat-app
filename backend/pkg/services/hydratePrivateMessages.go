@@ -9,7 +9,7 @@ import (
 	"github.com/tash-canter/go-chat-app/backend/pkg/userAuthentication"
 )
 
-type PriavteMessageResponse struct {
+type PrivateMessageResponse struct {
     Messages []db.PrivateMessage `json:"privateMessages"`
 }
 
@@ -54,6 +54,6 @@ func HydratePrivateMessages(w http.ResponseWriter, r *http.Request, jwtClaims us
 
     // Respond with the JWT
     w.WriteHeader(http.StatusOK)
-    json.NewEncoder(w).Encode(PriavteMessageResponse{Messages: messages})
+    json.NewEncoder(w).Encode(PrivateMessageResponse{Messages: messages})
     return nil
 }

@@ -61,28 +61,16 @@ export const SearchSidebar = ({
 };
 
 const styles: { [key: string]: React.CSSProperties } = {
-  container: {
-    display: "flex",
-    height: "100vh",
-    width: "100%",
-    overflow: "hidden",
-  },
-  chatSection: {
-    flex: 1, // Takes up the remaining space
-    backgroundColor: "#f9f9f9",
-    padding: "10px",
-    overflowY: "auto",
-  },
   sidebar: {
     width: "300px", // Fixed width for the sidebar
     backgroundColor: "#ffffff",
-    borderLeft: "1px solid #ddd",
+    borderRight: "1px solid #ddd",
     boxShadow: "0 2px 10px rgba(0, 0, 0, 0.1)",
     overflowY: "auto",
     padding: "10px",
   },
   input: {
-    width: "100%",
+    width: "90%",
     padding: "10px",
     fontSize: "16px",
     borderRadius: "5px",

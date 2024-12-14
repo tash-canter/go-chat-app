@@ -14,7 +14,7 @@ export const ChatPage = observer(() => {
   const {
     username,
     jwt,
-    addMessage,
+    addPrivateMessage,
     messages,
     initializeSocket,
     isLoggedIn,
@@ -36,7 +36,7 @@ export const ChatPage = observer(() => {
 
   const sendMessage = (event: any) => {
     if (event.keyCode === 13) {
-      addMessage(event.target.value);
+      addPrivateMessage(event.target.value);
       event.target.value = "";
     }
   };
@@ -82,14 +82,6 @@ export const ChatPage = observer(() => {
 
   return (
     <div style={styles.container}>
-      <div style={styles.chatSection}>
-        <ChatHistory
-          chatHistory={messages}
-          username={username}
-          recipientUsername={recipientUsername}
-        />
-        <ChatInput send={sendMessage} />
-      </div>
       <SearchSidebar
         onSearch={handleSearch}
         searchResults={data ? data.users : []}
@@ -97,6 +89,14 @@ export const ChatPage = observer(() => {
         isLoading={isLoading}
         selectedUserId={recipientId ?? 0}
       />
+      <div style={styles.chatSection}>
+        <ChatHistory
+          chatHistory={messages}
+          username={username}
+          recipientUsername={recipientUsername}
+        />
+        {recipientUsername && <ChatInput send={sendMessage} />}
+      </div>
     </div>
   );
 });

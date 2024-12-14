@@ -25,3 +25,20 @@ func HydratePrivateMessagesHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Invalid request method", http.StatusMethodNotAllowed)
 	}
 }
+
+func HydrateGroupMessagesHandler(w http.ResponseWriter, r *http.Request) {
+	if r.Method == http.MethodGet {
+		tokenString := middleware.ExtractTokenFromHeader(r)
+		jwtClaims, err := userAuthentication.ValidateJWT(tokenString)
+		if err != nil {
+			fmt.Println(err)
+			return
+		}
+		err = services.HydrateGroupMessages(w, r, *jwtClaims)
+		if err != nil {
+			fmt.Println(err)
+		}
+	} else {
+		http.Error(w, "Invalid request method", http.StatusMethodNotAllowed)
+	}
+}
