@@ -9,9 +9,9 @@ interface SearchResult {
 interface SearchSidebarProps {
   onSearch: (query: string) => void;
   searchResults: Array<SearchResult>;
-  onSelectUser: (userId: Number, username: string) => void;
+  onSelectUser: (userId: number, username: string) => void;
   isLoading: boolean;
-  selectedUserId: Number;
+  selectedUserId: number;
 }
 
 export const SearchSidebar = ({

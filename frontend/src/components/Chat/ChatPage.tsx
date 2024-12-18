@@ -21,11 +21,11 @@ export const ChatPage = observer(() => {
     setRecipientDetails,
     recipientId,
     recipientUsername,
-    hydratePrivateMessages,
   } = chatStore;
   const navigate = useNavigate();
   const [query, setQuery] = useState("");
 
+  console.log(recipientId, recipientUsername);
   useEffect(() => {
     if (isLoggedIn) {
       initializeSocket();
@@ -75,11 +75,13 @@ export const ChatPage = observer(() => {
     debouncedSetQuery(queryString);
   };
 
-  const handleSelectUser = (id: Number, username: string) => {
+  const handleSelectUser = (id: number, username: string) => {
+    console.log("SELECTING", id, typeof id);
     setRecipientDetails(id, username);
-    hydratePrivateMessages();
+    // hydratePrivateMessages();
   };
 
+  console.log("new", recipientId);
   return (
     <div style={styles.container}>
       <SearchSidebar

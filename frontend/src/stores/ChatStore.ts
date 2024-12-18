@@ -6,28 +6,38 @@ export type Message = {
   body: string;
   username: string;
   timestamp: string;
-  userId: Number;
-  recipientId?: Number;
+  userId: number;
+  recipientId?: number;
   recipientUsername?: string;
-  groupId?: Number;
+  groupId?: number;
   groupName?: string;
   action?: string;
 };
 
+type Conversation = {
+  conversationId: number;
+  lastMessage: string;
+  lastMessageAt: string;
+  isGroup: boolean;
+  unreadCount: number;
+  displayName: string;
+};
+
 interface CustomJwtPayload extends JwtPayload {
   username?: string;
-  userId?: Number;
+  userId?: number;
 }
 
 class ChatStore {
   messages: Message[] = [];
+  conversations: Conversation[] = [];
   socket: WebSocket | null = null;
   username: string = "";
-  userId: Number | null = null;
+  userId: number | null = null;
   recipientUsername?: string;
-  recipientId?: Number;
+  recipientId?: number;
   groupName?: string;
-  groupId?: Number;
+  groupId?: number;
   password: string = "";
   jwt: string | null = null;
   isLoggedIn = false;
@@ -46,15 +56,15 @@ class ChatStore {
       this.jwt = token;
       try {
         const decoded = jwtDecode<CustomJwtPayload>(token);
-        const expiration = decoded.exp ? decoded.exp * 1000 : 0; // Convert to milliseconds
+        const expiration = decoded.exp ? decoded.exp * 1000 : 0;
 
         if (Date.now() < expiration) {
-          this.username = decoded.username || ""; // assuming "username" is in the payload
+          this.username = decoded.username || "";
           this.userId = decoded.userId || null;
           this.isLoggedIn = true;
           this.hydratePrivateMessages();
         } else {
-          localStorage.removeItem("jwtToken"); // Remove expired token
+          localStorage.removeItem("jwtToken");
         }
       } catch (error) {
         console.error("Failed to decode JWT:", error);
@@ -77,6 +87,27 @@ class ChatStore {
       );
       const data = await response.json();
       this.messages = data.privateMessages; // Assuming the backend returns an array of messages
+    } catch (error) {
+      this.error = "Error loading messages";
+    } finally {
+      this.isLoading = false;
+    }
+  };
+
+  hydrateConversations = async () => {
+    this.isLoading = true;
+    try {
+      const response = await fetch(
+        `http://localhost:8080/api/hydrateConversations`,
+        {
+          method: "GET",
+          headers: {
+            Authorization: `Bearer ${this.jwt}`, // Pass JWT as a Bearer token in the Authorization header
+          },
+        }
+      );
+      const data = await response.json();
+      this.conversations = data.conversations; // Assuming the backend returns an array of messages
     } catch (error) {
       this.error = "Error loading messages";
     } finally {
@@ -174,12 +205,13 @@ class ChatStore {
     this.username = username;
   };
 
-  setRecipientDetails = (id: Number, username: string) => {
+  setRecipientDetails = (id: number, username: string) => {
+    console.log("setting");
     this.recipientId = id;
     this.recipientUsername = username;
   };
 
-  setUserId = (id: Number) => {
+  setUserId = (id: number) => {
     this.userId = id;
   };
 

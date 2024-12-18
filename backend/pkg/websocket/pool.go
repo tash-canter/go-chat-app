@@ -41,7 +41,7 @@ func (pool *Pool) Start() {
 			fmt.Println("Size of Connection Pool: ", len(pool.Clients))
 		case message := <-pool.Broadcast:
 			if message.GroupName != "" {
-				if err := services.SaveGroupMessage(message.UserId, message.GroupId, message.Body); err != nil {
+				if err := services.SaveGroupMessage(message.UserId, message.GroupId, message.Body, message.ConversationId); err != nil {
 					fmt.Println("Error saving message:", err)
 					return
 				}
@@ -49,7 +49,7 @@ func (pool *Pool) Start() {
                 pool.BroadcastToGroup(message)
             } else if message.RecipientUsername != "" {
                 fmt.Printf("Routing private message to: %s\n", message.RecipientUsername)
-				if err := services.SavePrivateMessage(message.UserId, message.RecipientId, message.Body); err != nil {
+				if err := services.SavePrivateMessage(message.UserId, message.RecipientId, message.Body, message.ConversationId); err != nil {
 					fmt.Println("Error saving message:", err)
 					return
 				}
@@ -72,7 +72,7 @@ func (pool *Pool) RemoveFromGroup(client *Client, groupId uint) {
         delete(pool.Groups[groupId], client.userId)
         fmt.Printf("User %d removed from group %d\n", client.userId, groupId)
         if len(pool.Groups[groupId]) == 0 {
-            delete(pool.Groups, groupId) // Clean up empty groups
+            delete(pool.Groups, groupId)
         }
     }
 }
@@ -88,6 +88,7 @@ func (pool *Pool) BroadcastToGroup(message Message) {
     } else {
 		fmt.Printf("Group %s not found\n", message.GroupName)
 	}
+	services.UpdateConversation(message.GroupName, message.Body, message.Timestamp, message.UserId, message.ConversationId)
 	pool.mu.RUnlock()
 }
 
@@ -107,5 +108,6 @@ func (pool *Pool) BroadcastToPrivateChat(message Message) {
 			fmt.Printf("Error sending private message: %v\n", err)
 		}
 	}
+	services.UpdateConversation(message.GroupName, message.Body, message.Timestamp, message.UserId, message.ConversationId)
 	pool.mu.RUnlock()
 }

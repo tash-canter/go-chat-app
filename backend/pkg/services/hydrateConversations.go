@@ -55,7 +55,6 @@ func HydrateConversations(w http.ResponseWriter, r *http.Request, jwtClaims user
 
     conversations := make([]Conversation, 0)
 
-    // Loop over the rows and scan each into a Message struct
     for rows.Next() {
         var conversation Conversation
         if err := rows.Scan(&conversation.conversationId, &conversation.lastMessage, &conversation.lastMessageAt, &conversation.isGroup, &conversation.unreadCount, &conversation.displayName); err != nil {
@@ -69,7 +68,6 @@ func HydrateConversations(w http.ResponseWriter, r *http.Request, jwtClaims user
         return err
     }
 
-    // Respond with the JWT
     w.WriteHeader(http.StatusOK)
     json.NewEncoder(w).Encode(ConversationsResponse{Conversations: conversations})
     return nil

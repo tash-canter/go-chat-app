@@ -17,7 +17,6 @@ type UsersResponse struct {
     Users []User `json:"users"`
 }
 
-// Register new user
 func SearchUsers(w http.ResponseWriter, r *http.Request) error {
     username := r.URL.Query().Get("username") // Fetch the query parameter
     if username == "" {

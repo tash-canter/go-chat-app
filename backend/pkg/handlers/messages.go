@@ -12,12 +12,12 @@ import (
 func HydratePrivateMessagesHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method == http.MethodGet {
 		tokenString := middleware.ExtractTokenFromHeader(r)
-		jwtClaims, err := userAuthentication.ValidateJWT(tokenString)
+		_, err := userAuthentication.ValidateJWT(tokenString)
 		if err != nil {
 			fmt.Println(err)
 			return
 		}
-		err = services.HydratePrivateMessages(w, r, *jwtClaims)
+		err = services.HydratePrivateMessages(w, r)
 		if err != nil {
 			fmt.Println(err)
 		}
@@ -29,12 +29,12 @@ func HydratePrivateMessagesHandler(w http.ResponseWriter, r *http.Request) {
 func HydrateGroupMessagesHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method == http.MethodGet {
 		tokenString := middleware.ExtractTokenFromHeader(r)
-		jwtClaims, err := userAuthentication.ValidateJWT(tokenString)
+		_, err := userAuthentication.ValidateJWT(tokenString)
 		if err != nil {
 			fmt.Println(err)
 			return
 		}
-		err = services.HydrateGroupMessages(w, r, *jwtClaims)
+		err = services.HydrateGroupMessages(w, r)
 		if err != nil {
 			fmt.Println(err)
 		}
