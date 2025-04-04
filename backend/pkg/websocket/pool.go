@@ -8,12 +8,12 @@ import (
 )
 
 type Pool struct {
-	Register   	chan *Client
-	Unregister 	chan *Client
-	Clients    	map[uint]*Client
-	Groups     	map[uint]map[uint]*Client
-	Broadcast  	chan Message
-	mu			sync.RWMutex
+	Register   		chan *Client
+	Unregister 		chan *Client
+	Clients    		map[uint]*Client
+	Conversations   map[uint]map[uint]*Client
+	Broadcast  		chan Message
+	mu				sync.RWMutex
 }
 
 func newPool() *Pool {
@@ -22,6 +22,7 @@ func newPool() *Pool {
 		Unregister: make(chan *Client),
 		Clients:    make(map[uint]*Client),
 		Broadcast:  make(chan Message),
+		Conversations: make(map[uint]map[uint]*Client),
 	}
 }
 
@@ -41,73 +42,52 @@ func (pool *Pool) Start() {
 			fmt.Println("Size of Connection Pool: ", len(pool.Clients))
 		case message := <-pool.Broadcast:
 			if message.GroupName != "" {
-				if err := services.SaveGroupMessage(message.UserId, message.GroupId, message.Body, message.ConversationId); err != nil {
+				if err := services.SaveGroupMessage(message.UserId, message.Body, message.ConversationId); err != nil {
 					fmt.Println("Error saving message:", err)
 					return
 				}
-                fmt.Printf("Broadcasting to group: %s\n", message.GroupName)
-                pool.BroadcastToGroup(message)
             } else if message.RecipientUsername != "" {
                 fmt.Printf("Routing private message to: %s\n", message.RecipientUsername)
-				if err := services.SavePrivateMessage(message.UserId, message.RecipientId, message.Body, message.ConversationId); err != nil {
+				if err := services.SavePrivateMessage(message.UserId, message.Body, message.ConversationId); err != nil {
 					fmt.Println("Error saving message:", err)
 					return
 				}
-                pool.BroadcastToPrivateChat(message)
 			}
+			pool.BroadcastToConversation(message)
 		}
 	}
 }
 
-func (pool *Pool) AddToGroup(client *Client, groupId uint) {
-    if pool.Groups[groupId] == nil {
-        pool.Groups[groupId] = make(map[uint]*Client)
+func (pool *Pool) AddToConversation(client *Client, conversationId uint) {
+    if pool.Conversations[conversationId] == nil {
+        pool.Conversations[conversationId] = make(map[uint]*Client)
     }
-    pool.Groups[groupId][client.userId] = client
-    fmt.Printf("User %d added to group %d\n", client.userId, groupId)
+    pool.Conversations[conversationId][client.userId] = client
+    fmt.Printf("User %d added to conversation %d\n", client.userId, conversationId)
 }
 
-func (pool *Pool) RemoveFromGroup(client *Client, groupId uint) {
-    if _, ok := pool.Groups[groupId]; ok {
-        delete(pool.Groups[groupId], client.userId)
-        fmt.Printf("User %d removed from group %d\n", client.userId, groupId)
-        if len(pool.Groups[groupId]) == 0 {
-            delete(pool.Groups, groupId)
+func (pool *Pool) RemoveFromGroup(client *Client, conversationId uint) {
+    if _, ok := pool.Conversations[conversationId]; ok {
+        delete(pool.Conversations[conversationId], client.userId)
+        fmt.Printf("User %d removed from group %d\n", client.userId, conversationId)
+        if len(pool.Conversations[conversationId]) == 0 {
+            delete(pool.Conversations, conversationId)
         }
     }
 }
 
-func (pool *Pool) BroadcastToGroup(message Message) {
+func (pool *Pool) BroadcastToConversation(message Message) {
 	pool.mu.RLock()
-    if members, ok := pool.Groups[message.GroupId]; ok {
+    if members, ok := pool.Conversations[message.ConversationId]; ok {
         for _, member := range members {
             if err := member.Conn.WriteJSON(message); err != nil {
                 fmt.Printf("Error broadcasting to user %s: %v\n", member.ID, err)
             }
         }
     } else {
-		fmt.Printf("Group %s not found\n", message.GroupName)
+		fmt.Printf("Conversation %s not found\n", message.GroupName)
 	}
 	services.UpdateConversation(message.GroupName, message.Body, message.Timestamp, message.UserId, message.ConversationId)
 	pool.mu.RUnlock()
 }
 
-func (pool *Pool) BroadcastToPrivateChat(message Message) {
-	pool.mu.RLock()
-    if recipient, ok := pool.Clients[message.RecipientId]; ok {
-		err := recipient.Conn.WriteJSON(message)
-		if err != nil {
-			fmt.Printf("Error sending private message: %v\n", err)
-		}
-	} else {
-		fmt.Printf("User %s not connected\n", message.RecipientUsername)
-	}
-	if user, ok := pool.Clients[message.UserId]; ok {
-		err := user.Conn.WriteJSON(message)
-		if err != nil {
-			fmt.Printf("Error sending private message: %v\n", err)
-		}
-	}
-	services.UpdateConversation(message.GroupName, message.Body, message.Timestamp, message.UserId, message.ConversationId)
-	pool.mu.RUnlock()
-}

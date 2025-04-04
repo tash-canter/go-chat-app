@@ -9,14 +9,19 @@ import (
 	"github.com/tash-canter/go-chat-app/backend/pkg/userAuthentication"
 )
 
-func HydrateConversationsHandler(w http.ResponseWriter, r *http.Request) {
-	if r.Method == http.MethodGet {
-		tokenString := middleware.ExtractTokenFromHeader(r)
-		jwtClaims, err := userAuthentication.ValidateJWT(tokenString)
+func ConversationsHandler(w http.ResponseWriter, r *http.Request) {
+	tokenString := middleware.ExtractTokenFromHeader(r)
+	jwtClaims, err := userAuthentication.ValidateJWT(tokenString)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	if r.Method == http.MethodPost {
+		err = services.AddConversation(w, r, *jwtClaims)
 		if err != nil {
 			fmt.Println(err)
-			return
 		}
+	} else if r.Method == http.MethodGet {
 		err = services.HydrateConversations(w, r, *jwtClaims)
 		if err != nil {
 			fmt.Println(err)

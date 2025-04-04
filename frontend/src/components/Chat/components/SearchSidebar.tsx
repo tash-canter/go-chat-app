@@ -1,27 +1,61 @@
-import { useQuery } from "@tanstack/react-query";
-import React, { useState, ChangeEvent, useMemo } from "react";
+import React, { useState } from "react";
 import { Spinner } from ".";
+import { Conversation, User } from "../../../api/chatApi";
 
-interface SearchResult {
-  userId: string;
-  username: string;
-}
 interface SearchSidebarProps {
   onSearch: (query: string) => void;
-  searchResults: Array<SearchResult>;
+  searchResults?: User[];
+  conversations?: Conversation[];
   onSelectUser: (userId: number, username: string) => void;
+  onSelectConversation: (conversation: Conversation) => void;
   isLoading: boolean;
-  selectedUserId: number;
+  selectedUserId?: number;
+  selectedConversationId?: number;
 }
 
 export const SearchSidebar = ({
   onSearch,
   searchResults,
+  conversations,
   onSelectUser,
+  onSelectConversation,
   isLoading,
   selectedUserId,
+  selectedConversationId,
 }: SearchSidebarProps) => {
   const [localQuery, setLocalQuery] = useState("");
+
+  const listToRender = () => {
+    if (searchResults) {
+      return searchResults.map((result) => (
+        <li
+          key={result.userId}
+          style={{
+            ...styles.resultItem,
+            ...(selectedUserId === result.userId && styles.selectedItem),
+          }}
+          onClick={() => onSelectUser(result.userId, result.username)}
+        >
+          {result.username}
+        </li>
+      ));
+    } else if (conversations) {
+      return conversations.map((conversation) => (
+        <li
+          key={conversation.conversationId}
+          style={{
+            ...styles.resultItem,
+            ...(selectedConversationId === conversation.conversationId &&
+              styles.selectedItem),
+          }}
+          onClick={() => onSelectConversation(conversation)}
+        >
+          {conversation.displayName}
+        </li>
+      ));
+    }
+  };
+
   return (
     <div style={styles.sidebar}>
       <input
@@ -38,23 +72,7 @@ export const SearchSidebar = ({
       {isLoading ? (
         <Spinner />
       ) : (
-        <ul style={styles.resultList}>
-          {searchResults.map((result) => (
-            <li
-              key={result.userId}
-              style={{
-                ...styles.resultItem,
-                ...(selectedUserId === Number(result.userId) &&
-                  styles.selectedItem),
-              }}
-              onClick={() =>
-                onSelectUser(Number(result.userId), result.username)
-              }
-            >
-              {result.username}
-            </li>
-          ))}
-        </ul>
+        <ul style={styles.resultList}>{listToRender()}</ul>
       )}
     </div>
   );

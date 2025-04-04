@@ -23,9 +23,7 @@ type Message struct {
 	Username 			string 		`json:"username"`
 	UserId				uint		`json:"userId"`
 	RecipientUsername 	string 		`json:"recipientUsername"`
-	RecipientId			uint		`json:"recipientId"`
 	GroupName   		string 		`json:"groupName"`
-	GroupId				uint		`json:"groupId"`
 	Timestamp			time.Time	`json:"timestamp"`
 	Action				string		`json:"action"`
 }
@@ -51,7 +49,7 @@ func (c *Client) Read() {
 		}
 
 		if newMessage.Action == "subscribe" {
-			c.Pool.AddToGroup(c, newMessage.GroupId)
+			c.Pool.AddToConversation(c, newMessage.ConversationId)
 		} else {
 			message := Message{
 				Type: messageType, 
@@ -59,9 +57,7 @@ func (c *Client) Read() {
 				Username: newMessage.Username, 
 				Timestamp: newMessage.Timestamp, 
 				UserId: newMessage.UserId, 
-				RecipientId: newMessage.RecipientId,
 				RecipientUsername: newMessage.RecipientUsername,
-				GroupId: newMessage.GroupId,
 				GroupName: newMessage.GroupName,
 				ConversationId: newMessage.ConversationId,
 			}

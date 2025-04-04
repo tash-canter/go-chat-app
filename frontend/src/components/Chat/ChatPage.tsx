@@ -5,6 +5,13 @@ import { ChatHistory, ChatInput, SearchSidebar } from "./components";
 import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import debounce from "lodash/debounce";
+import {
+  addConversation,
+  Conversation,
+  fetchUsers,
+  hydrateConversations,
+  User,
+} from "../../api/chatApi";
 
 export const ChatPage = observer(() => {
   const chatStore = useContext(StoreContext);
@@ -17,17 +24,19 @@ export const ChatPage = observer(() => {
     addPrivateMessage,
     messages,
     initializeSocket,
+    hydratePrivateMessages,
+    subscribeToConversation,
     isLoggedIn,
-    setRecipientDetails,
-    recipientId,
-    recipientUsername,
   } = chatStore;
   const navigate = useNavigate();
   const [query, setQuery] = useState("");
+  const [conversationId, setConversationId] = useState<number>();
+  const [recipientDetails, setRecipientDetails] = useState<User | null>(null);
+  const [conversations, setConversations] = useState<Conversation[]>([]);
 
-  console.log(recipientId, recipientUsername);
   useEffect(() => {
     if (isLoggedIn) {
+      hydrateConversations(jwt, setConversations);
       initializeSocket();
     } else {
       navigate("/");
@@ -35,8 +44,8 @@ export const ChatPage = observer(() => {
   }, [isLoggedIn]);
 
   const sendMessage = (event: any) => {
-    if (event.keyCode === 13) {
-      addPrivateMessage(event.target.value);
+    if (event.keyCode === 13 && conversationId && recipientDetails) {
+      addPrivateMessage(event.target.value, conversationId, recipientDetails);
       event.target.value = "";
     }
   };
@@ -49,25 +58,9 @@ export const ChatPage = observer(() => {
     []
   );
 
-  // Fetch function for querying users
-  const fetchUsers = async (query: string) => {
-    const response = await fetch(
-      `http://localhost:8080/api/searchUsers?username=${query}`,
-      {
-        headers: {
-          Authorization: `Bearer ${jwt}`, // Pass JWT as a Bearer token in the Authorization header
-        },
-      }
-    );
-    if (!response.ok) {
-      throw new Error("Failed to fetch users");
-    }
-    return response.json();
-  };
-
-  const { data, isLoading } = useQuery({
+  const { data: users, isLoading } = useQuery({
     queryKey: ["searchUsers", query],
-    queryFn: async () => await fetchUsers(query),
+    queryFn: async () => await fetchUsers(query, jwt),
     enabled: !!query, // Only execute when query has a value
   });
 
@@ -76,28 +69,46 @@ export const ChatPage = observer(() => {
   };
 
   const handleSelectUser = (id: number, username: string) => {
-    console.log("SELECTING", id, typeof id);
-    setRecipientDetails(id, username);
-    // hydratePrivateMessages();
+    addConversation(jwt, id, setConversationId);
+    // setConversationId(conversationId);
+    setRecipientDetails({
+      userId: id,
+      username,
+    });
+    if (conversationId) {
+      subscribeToConversation(conversationId);
+    }
   };
 
-  console.log("new", recipientId);
+  const handleSelectConversation = (conversation: Conversation) => {
+    setConversationId(conversation.conversationId);
+    setRecipientDetails({
+      username: conversation.displayName,
+      userId: 0,
+    });
+    console.log(conversation);
+    hydratePrivateMessages(conversation.conversationId);
+    subscribeToConversation(conversation.conversationId);
+  };
+
   return (
     <div style={styles.container}>
       <SearchSidebar
         onSearch={handleSearch}
-        searchResults={data ? data.users : []}
+        searchResults={users}
+        conversations={conversations}
+        onSelectConversation={handleSelectConversation}
         onSelectUser={handleSelectUser}
         isLoading={isLoading}
-        selectedUserId={recipientId ?? 0}
+        selectedUserId={recipientDetails ? recipientDetails.userId : 0}
       />
       <div style={styles.chatSection}>
         <ChatHistory
           chatHistory={messages}
           username={username}
-          recipientUsername={recipientUsername}
+          recipientUsername={recipientDetails?.username}
         />
-        {recipientUsername && <ChatInput send={sendMessage} />}
+        {recipientDetails?.username && <ChatInput send={sendMessage} />}
       </div>
     </div>
   );

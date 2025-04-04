@@ -1,22 +1,23 @@
 package services
 
 import (
+	"database/sql"
 	"encoding/json"
 	"net/http"
-	"time"
 
 	"github.com/tash-canter/go-chat-app/backend/pkg/db"
 	"github.com/tash-canter/go-chat-app/backend/pkg/userAuthentication"
 )
 
 type Conversation struct {
-    conversationId      uint
-    lastMessage         string
-    lastMessageAt       time.Time
-    isGroup             bool
-    unreadCount         uint
-    displayName         string
+    ConversationId uint           `json:"conversationId"`
+    LastMessage    sql.NullString `json:"lastMessage"`
+    LastMessageAt  sql.NullTime   `json:"lastMessageAt"`
+    IsGroup        bool           `json:"isGroup"`
+    UnreadCount    uint           `json:"unreadCount"`
+    DisplayName    string         `json:"displayName"`
 }
+
 type ConversationsResponse struct {
     Conversations []Conversation `json:"conversations"`
 }
@@ -31,7 +32,7 @@ func HydrateConversations(w http.ResponseWriter, r *http.Request, jwtClaims user
             c.last_message_at,
             c.is_group,
             cp.unread_count,
-            CASE WHEN c.chat_name IS NOT NULL THEN
+            CASE WHEN c.chat_name != '' THEN
                 c.chat_name
             ELSE
                 u.username
@@ -57,7 +58,7 @@ func HydrateConversations(w http.ResponseWriter, r *http.Request, jwtClaims user
 
     for rows.Next() {
         var conversation Conversation
-        if err := rows.Scan(&conversation.conversationId, &conversation.lastMessage, &conversation.lastMessageAt, &conversation.isGroup, &conversation.unreadCount, &conversation.displayName); err != nil {
+        if err := rows.Scan(&conversation.ConversationId, &conversation.LastMessage, &conversation.LastMessageAt, &conversation.IsGroup, &conversation.UnreadCount, &conversation.DisplayName); err != nil {
             http.Error(w, "failed to scan message row", http.StatusInternalServerError)
             return err
         }

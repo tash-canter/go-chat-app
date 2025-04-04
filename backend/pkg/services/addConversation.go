@@ -26,17 +26,18 @@ func AddConversation(w http.ResponseWriter, r *http.Request, jwtClaims userAuthe
     }
 	
 	sql_add_conversation := 
-	`INSERT INTO conversations (is_group, group_id, chat_name, last_message, last_message_at, last_message_by) VALUES ($1, $2, $3, $4, $5, $6)
+	`INSERT INTO conversations (is_group, chat_name) VALUES ($1, $2)
 		RETURNING id;`
 
 	var conversationId uint
-	err = db.Db.QueryRow(sql_add_conversation, conversation.IsGroup, conversation.GroupId, conversation.ChatName).Scan(&conversationId)
+	err = db.Db.QueryRow(sql_add_conversation, conversation.IsGroup, conversation.ChatName).Scan(&conversationId)
 	if err != nil {
 		return fmt.Errorf("failed to insert message into db: %v", err)
 	}
+	println(conversationId, "convo id", jwtClaims.Id)
 
 	sql_add_conversation_participant := `INSERT INTO conversation_participants (conversation_id, user_id, unread_count) VALUES ($1, $2, $3)`
-		_, err = db.Db.Exec(sql_add_conversation_participant, conversationId, jwtClaims.Id, 0)
+		_, err = db.Db.Exec(sql_add_conversation_participant, conversationId, jwtClaims.UserId, 0)
 		if err != nil {
 			return fmt.Errorf("failed to insert message into db: %v", err)
 		}

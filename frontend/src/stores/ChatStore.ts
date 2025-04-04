@@ -1,16 +1,21 @@
 import { action, makeAutoObservable } from "mobx";
 import { createContext } from "react";
 import { jwtDecode, JwtPayload } from "jwt-decode";
+import { User } from "../api/chatApi";
 
 export type Message = {
   body: string;
   username: string;
   timestamp: string;
   userId: number;
-  recipientId?: number;
-  recipientUsername?: string;
-  groupId?: number;
-  groupName?: string;
+  recipientUsername: string;
+  recipientId: number | null;
+  conversationId: number;
+  action?: string;
+};
+
+export type SubscribeMessage = {
+  conversationId: number;
   action?: string;
 };
 
@@ -34,8 +39,8 @@ class ChatStore {
   socket: WebSocket | null = null;
   username: string = "";
   userId: number | null = null;
-  recipientUsername?: string;
-  recipientId?: number;
+  recipientUsername: string = "";
+  recipientId: number | null = null;
   groupName?: string;
   groupId?: number;
   password: string = "";
@@ -62,7 +67,6 @@ class ChatStore {
           this.username = decoded.username || "";
           this.userId = decoded.userId || null;
           this.isLoggedIn = true;
-          this.hydratePrivateMessages();
         } else {
           localStorage.removeItem("jwtToken");
         }
@@ -72,48 +76,6 @@ class ChatStore {
       }
     }
   }
-
-  hydratePrivateMessages = async () => {
-    this.isLoading = true;
-    try {
-      const response = await fetch(
-        `http://localhost:8080/api/hydratePrivateMessages?recipient_id=${this.recipientId}`,
-        {
-          method: "GET",
-          headers: {
-            Authorization: `Bearer ${this.jwt}`, // Pass JWT as a Bearer token in the Authorization header
-          },
-        }
-      );
-      const data = await response.json();
-      this.messages = data.privateMessages; // Assuming the backend returns an array of messages
-    } catch (error) {
-      this.error = "Error loading messages";
-    } finally {
-      this.isLoading = false;
-    }
-  };
-
-  hydrateConversations = async () => {
-    this.isLoading = true;
-    try {
-      const response = await fetch(
-        `http://localhost:8080/api/hydrateConversations`,
-        {
-          method: "GET",
-          headers: {
-            Authorization: `Bearer ${this.jwt}`, // Pass JWT as a Bearer token in the Authorization header
-          },
-        }
-      );
-      const data = await response.json();
-      this.conversations = data.conversations; // Assuming the backend returns an array of messages
-    } catch (error) {
-      this.error = "Error loading messages";
-    } finally {
-      this.isLoading = false;
-    }
-  };
 
   setToken = (token: string) => {
     this.jwt = token;
@@ -149,8 +111,7 @@ class ChatStore {
             timestamp: receivedMessage.timestamp,
             recipientId: receivedMessage.recipientId,
             recipientUsername: receivedMessage.recipientUsername,
-            groupId: receivedMessage.groupId,
-            groupName: receivedMessage.groupName,
+            conversationId: receivedMessage.conversationId,
           },
         ];
         if (!this.recipientId || !this.recipientUsername) {
@@ -169,31 +130,60 @@ class ChatStore {
     }
   };
 
+  hydratePrivateMessages = async (conversationId: number) => {
+    try {
+      const response = await fetch(
+        `http://localhost:8080/api/hydratePrivateMessages?conversation_id=${conversationId}`,
+        {
+          method: "GET",
+          headers: {
+            Authorization: `Bearer ${this.jwt}`, // Pass JWT as a Bearer token in the Authorization header
+          },
+        }
+      );
+      const data = await response.json();
+      const messages: Message[] = data.privateMessages.map((msg: any) => ({
+        body: msg.body,
+        username: msg.username,
+        timestamp: new Date(msg.timestamp),
+        userId: msg.userId,
+        conversationId: msg.conversationId,
+        recipientUsername: msg.recipientUsername,
+        recipientId: msg.recipientId,
+      }));
+      this.messages = messages;
+    } catch (error) {
+      throw new Error("Error loading messages");
+    }
+  };
+
   // Add a new message and send it to the WebSocket server
-  addPrivateMessage = (message: string) => {
+  addPrivateMessage = (
+    message: string,
+    conversationId: number,
+    recipientDetails: User
+  ) => {
     if (this.userId && this.socket) {
       const msgObj: Message = {
         body: message,
         username: this.username,
         timestamp: new Date().toISOString(),
         userId: this.userId,
-        recipientId: this.recipientId,
-        recipientUsername: this.recipientUsername,
+        recipientId: recipientDetails.userId,
+        recipientUsername: recipientDetails.username,
+        conversationId: conversationId,
       };
 
+      console.log("message ", recipientDetails);
       this.socket.send(JSON.stringify(msgObj));
     }
   };
 
-  subscribeToGroup = () => {
-    if (this.socket && this.userId) {
-      const msgObj: Message = {
-        body: "",
-        username: this.username,
-        timestamp: new Date().toISOString(),
-        userId: this.userId,
-        groupId: this.groupId,
-        groupName: this.groupName,
+  subscribeToConversation = (conversationId: number) => {
+    console.log("subscribing");
+    if (this.socket) {
+      const msgObj: SubscribeMessage = {
+        conversationId,
         action: "subscribe",
       };
 
