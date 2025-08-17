@@ -1,112 +1,126 @@
-import { useQuery } from "@tanstack/react-query";
-import React, { useState, ChangeEvent, useMemo } from "react";
-import { Spinner } from ".";
+import React, { useState } from "react";
+import {
+  Box,
+  TextField,
+  List,
+  ListItem,
+  ListItemButton,
+  ListItemText,
+  Typography,
+  CircularProgress,
+  Divider,
+} from "@mui/material";
+import SearchIcon from "@mui/icons-material/Search";
+import PersonIcon from "@mui/icons-material/Person";
+import { useChatStore } from "../../../stores/state";
 
 interface SearchResult {
-  userId: string;
+  userID: string;
   username: string;
 }
+
 interface SearchSidebarProps {
   onSearch: (query: string) => void;
   searchResults: Array<SearchResult>;
-  onSelectUser: (userId: Number, username: string) => void;
   isLoading: boolean;
-  selectedUserId: Number;
+  selectedUserID: Number;
 }
 
 export const SearchSidebar = ({
   onSearch,
   searchResults,
-  onSelectUser,
   isLoading,
-  selectedUserId,
+  selectedUserID,
 }: SearchSidebarProps) => {
   const [localQuery, setLocalQuery] = useState("");
-  return (
-    <div style={styles.sidebar}>
-      <input
-        type="text"
-        placeholder="Search by username..."
-        value={localQuery}
-        onChange={(e) => {
-          const newValue = e.target.value;
-          setLocalQuery(newValue);
-          onSearch(newValue);
-        }}
-        style={styles.input}
-      />
-      {isLoading ? (
-        <Spinner />
-      ) : (
-        <ul style={styles.resultList}>
-          {searchResults.map((result) => (
-            <li
-              key={result.userId}
-              style={{
-                ...styles.resultItem,
-                ...(selectedUserId === Number(result.userId) &&
-                  styles.selectedItem),
-              }}
-              onClick={() =>
-                onSelectUser(Number(result.userId), result.username)
-              }
-            >
-              {result.username}
-            </li>
-          ))}
-        </ul>
-      )}
-    </div>
-  );
-};
+  const { setRecipient } = useChatStore();
 
-const styles: { [key: string]: React.CSSProperties } = {
-  container: {
-    display: "flex",
-    height: "100vh",
-    width: "100%",
-    overflow: "hidden",
-  },
-  chatSection: {
-    flex: 1, // Takes up the remaining space
-    backgroundColor: "#f9f9f9",
-    padding: "10px",
-    overflowY: "auto",
-  },
-  sidebar: {
-    width: "300px", // Fixed width for the sidebar
-    backgroundColor: "#ffffff",
-    borderLeft: "1px solid #ddd",
-    boxShadow: "0 2px 10px rgba(0, 0, 0, 0.1)",
-    overflowY: "auto",
-    padding: "10px",
-  },
-  input: {
-    width: "100%",
-    padding: "10px",
-    fontSize: "16px",
-    borderRadius: "5px",
-    border: "1px solid rgba(0, 0, 0, 0.1)",
-    boxShadow: "0 5px 15px -5px rgba(0, 0, 0, 0.1)",
-  },
-  resultList: {
-    listStyleType: "none",
-    padding: 0,
-    margin: "10px 0",
-  },
-  resultItem: {
-    padding: "10px",
-    margin: "5px 0",
-    backgroundColor: "#f4f4f4",
-    borderRadius: "5px",
-    cursor: "pointer",
-    transition: "background-color 0.2s",
-  },
-  selectedItem: {
-    backgroundColor: "#007bff",
-    color: "#ffffff",
-  },
-  resultItemHover: {
-    backgroundColor: "#e0e0e0",
-  },
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newValue = e.target.value;
+    setLocalQuery(newValue);
+    onSearch(newValue);
+  };
+
+  return (
+    <Box
+      sx={{
+        height: "100%",
+        display: "flex",
+        flexDirection: "column",
+        justifyContent: "center",
+        alignItems: "center",
+        bottom: 100,
+      }}
+    >
+      <Box
+        sx={{
+          height: "100vh", // full screen height
+          display: "flex",
+          justifyContent: "center", // centre vertically
+          flexDirection: "column",
+          alignItems: "center",
+        }}
+      >
+        <img
+          src="/assets/TalkWithTash.png"
+          alt="Logo"
+          style={{ height: 200, width: "auto", marginBottom: 10 }}
+        />
+        <TextField
+          fullWidth
+          placeholder="Search users to start a conversation..."
+          sx={{
+            width: "75vw",
+            maxWidth: "600px",
+            "& .MuiOutlinedInput-root": {
+              borderRadius: "50px",
+            },
+          }}
+          variant="outlined"
+          value={localQuery}
+          onChange={handleChange}
+          InputProps={{
+            startAdornment: <SearchIcon color="action" sx={{ mr: 1 }} />,
+          }}
+        />
+      </Box>
+
+      <Divider />
+
+      <Box sx={{ flex: 1, overflow: "auto" }}>
+        {isLoading ? (
+          <Box sx={{ display: "flex", justifyContent: "center", p: 3 }}>
+            <CircularProgress />
+          </Box>
+        ) : searchResults.length > 0 ? (
+          <List>
+            {searchResults.map((result) => (
+              <ListItem key={result.userID} disablePadding>
+                <ListItemButton
+                  selected={selectedUserID === Number(result.userID)}
+                  key={result.userID}
+                  onClick={() =>
+                    setRecipient(result.username, Number(result.userID))
+                  }
+                >
+                  <PersonIcon sx={{ mr: 2 }} />
+                  <ListItemText primary={result.username} />
+                </ListItemButton>
+              </ListItem>
+            ))}
+          </List>
+        ) : localQuery ? (
+          <Box sx={{ p: 3, textAlign: "center" }}>
+            <Typography color="text.secondary">No users found</Typography>
+          </Box>
+        ) : (
+          <Box sx={{ p: 3, textAlign: "center" }}>
+            <Typography color="text.secondary">
+              Search for users to start a conversation
+            </Typography>
+          </Box>
+        )}
+      </Box>
+    </Box>
+  );
 };

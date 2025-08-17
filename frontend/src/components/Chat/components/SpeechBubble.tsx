@@ -1,74 +1,63 @@
-import styled from "styled-components";
 import React from "react";
-import { Message } from "../../../stores/ChatStore";
+import { Box, Paper, Typography } from "@mui/material";
 
-interface SpeechBubble {
+interface SpeechBubbleProps {
   currUsername: string;
   timestamp: string;
   username: string;
   body: string;
 }
+
 export const SpeechBubble = ({
   username,
   body,
   currUsername,
   timestamp,
-}: SpeechBubble) => {
-  const isFromUser = currUsername === username;
-  const styles = getStyles({ isFromUser });
-
+}: SpeechBubbleProps) => {
+  const isFromCurrentUser = currUsername === username;
   const formattedTimestamp = new Date(timestamp).toLocaleTimeString([], {
     hour: "2-digit",
     minute: "2-digit",
   });
 
   return (
-    <div style={styles.messageWrapper}>
-      <div style={styles.speechBubble}>
-        <div style={styles.username}>{username}</div>
-        <div style={styles.message}>{body}</div>
-        <div style={styles.timestamp}>{formattedTimestamp}</div>
-      </div>
-    </div>
+    <Box
+      sx={{
+        display: "flex",
+        justifyContent: isFromCurrentUser ? "flex-end" : "flex-start",
+        mb: 2,
+      }}
+    >
+      <Paper
+        elevation={1}
+        sx={{
+          p: 2,
+          maxWidth: "70%",
+          backgroundColor: isFromCurrentUser ? "primary.main" : "grey.200",
+          color: isFromCurrentUser ? "white" : "text.primary",
+          borderRadius: 2,
+        }}
+      >
+        <Typography variant="subtitle2" sx={{ fontWeight: "bold", mb: 0.5 }}>
+          {username}
+        </Typography>
+
+        <Typography variant="body1">{body}</Typography>
+
+        <Typography
+          variant="caption"
+          sx={{
+            display: "block",
+            textAlign: "right",
+            mt: 1,
+            color: isFromCurrentUser
+              ? "rgba(255, 255, 255, 0.7)"
+              : "text.secondary",
+          }}
+        >
+          {formattedTimestamp}
+        </Typography>
+      </Paper>
+    </Box>
   );
 };
-
-type StyleProps = {
-  isFromUser: boolean;
-};
-
-const getStyles = ({
-  isFromUser,
-}: StyleProps): { [key: string]: React.CSSProperties } => ({
-  speechBubble: {
-    position: "relative",
-    backgroundColor: isFromUser ? "#007bff" : "#e0e0e0",
-    borderRadius: "15px",
-    color: isFromUser ? "white" : "black",
-    padding: "10px 15px",
-    margin: "10px 0",
-    maxWidth: "400px",
-    boxShadow: "0 2px 5px rgba(0, 0, 0, 0.2)",
-    alignSelf: isFromUser ? "flex-end" : "flex-start",
-  },
-  username: {
-    fontWeight: "bold", // Corrected fontWeight syntax
-    marginBottom: "5px", // Corrected margin syntax
-    textAlign: "left", // Corrected text-align syntax
-  },
-  message: {
-    fontSize: "14px", // Corrected font-size to fontSize
-    textAlign: "left", // Corrected text-align syntax
-  },
-  timestamp: {
-    fontSize: "12px",
-    textAlign: "right",
-    color: isFromUser ? "lightgrey" : "darkgrey",
-    marginTop: "5px",
-  },
-  messageWrapper: {
-    display: "flex", // Corrected display property
-    justifyContent: isFromUser ? "flex-end" : "flex-start", // Corrected logic to use `isFromUser`
-    margin: "10px 0",
-  },
-});

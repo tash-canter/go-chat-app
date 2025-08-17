@@ -26,7 +26,7 @@ func RegisterUser(w http.ResponseWriter, r *http.Request) error {
     }
 	
     // Store in database (using PostgreSQL in this example)
-    _, err = db.Db.Exec("INSERT INTO users (username, password) VALUES ($1, $2)", user.Username, string(hashedPassword))
+    err = db.Db.QueryRow("INSERT INTO users (username, password) VALUES ($1, $2) RETURNING id", user.Username, string(hashedPassword)).Scan(&user.UserID)
     if err != nil {
         fmt.Println(err)
         http.Error(w, "Could not create user", http.StatusInternalServerError)
@@ -39,8 +39,20 @@ func RegisterUser(w http.ResponseWriter, r *http.Request) error {
         return err
     }
 
+    // Set JWT as httpOnly cookie
+    cookie := &http.Cookie{
+        Name:     "auth_token",
+        Value:    token,
+        HttpOnly: true,
+        Secure:   true,              // requires HTTPS in production
+        SameSite: http.SameSiteLaxMode,
+        Path:     "/",
+        MaxAge:   60 * 60 * 24 * 7,  // 1 week
+    }
+    http.SetCookie(w, cookie)
+
     // Respond with the JWT
     w.WriteHeader(http.StatusOK)
-    json.NewEncoder(w).Encode(RegisterResponse{JWT: token, UserId: user.UserID})
+    json.NewEncoder(w).Encode(RegisterResponse{Username: user.Username, UserID: user.UserID})
     return nil
 }

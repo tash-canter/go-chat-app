@@ -5,7 +5,6 @@ import (
 	"net/http"
 
 	"github.com/gorilla/websocket"
-	"github.com/tash-canter/go-chat-app/backend/pkg/middleware"
 	"github.com/tash-canter/go-chat-app/backend/pkg/userAuthentication"
 )
 
@@ -31,10 +30,16 @@ func upgrade(w http.ResponseWriter, r *http.Request) (*websocket.Conn, error) {
 }
 
 func serveWs(pool *Pool, w http.ResponseWriter, r *http.Request) {
-	tokenString := middleware.ExtractTokenFromUrl(r)
-	jwtClaims, err := userAuthentication.ValidateJWT(tokenString)
+	cookie, err := r.Cookie("auth_token")
+    if err != nil {
+        http.Error(w, "unauthorized", http.StatusUnauthorized)
+        return
+    }
+	token := cookie.Value
+	jwtClaims, err := userAuthentication.ValidateJWT(token)
 	if err != nil {
 		fmt.Println(err)
+		return
 	}
 
 	conn, err := upgrade(w, r)
@@ -45,7 +50,7 @@ func serveWs(pool *Pool, w http.ResponseWriter, r *http.Request) {
 	client := &Client{
 		Conn: conn,
 		Pool: pool,
-		userId: jwtClaims.UserId, 
+		userID: jwtClaims.UserID, 
 	}
 
 	pool.Register <- client

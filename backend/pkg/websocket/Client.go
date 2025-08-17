@@ -12,18 +12,16 @@ type Client struct {
 	ID   				string
 	Conn 				*websocket.Conn
 	Pool 				*Pool
-	userId				uint
+	userID				uint
 }
 
 type Message struct {
 	Type     			int    	`json:"type"`
 	Body     			string 	`json:"body"`
 	Username 			string 	`json:"username"`
-	UserId				uint	`json:"userId"`
+	UserID				uint	`json:"userID"`
 	RecipientUsername 	string 	`json:"recipientUsername"`
-	RecipientId			uint	`json:"recipientId"`
-	GroupName   		string 	`json:"groupName"`
-	GroupId				uint	`json:"groupId"`
+	RecipientID			uint	`json:"recipientID"`
 	Timestamp			string	`json:"timestamp"`
 	Action				string	`json:"action"`
 }
@@ -48,22 +46,16 @@ func (c *Client) Read() {
 			log.Fatalf("Error unmarshalling JSON: %v", err)
 		}
 
-		if newMessage.Action == "subscribe" {
-			c.Pool.AddToGroup(c, newMessage.GroupId)
-		} else {
-			message := Message{
-				Type: messageType, 
-				Body: newMessage.Body, 
-				Username: newMessage.Username, 
-				Timestamp: newMessage.Timestamp, 
-				UserId: newMessage.UserId, 
-				RecipientId: newMessage.RecipientId,
-				RecipientUsername: newMessage.RecipientUsername,
-				GroupId: newMessage.GroupId,
-				GroupName: newMessage.GroupName,
-			}
-			c.Pool.Broadcast <- message
-			fmt.Printf("Message Received: %+v\n", message)
+		message := Message{
+			Type: messageType, 
+			Body: newMessage.Body, 
+			Username: newMessage.Username, 
+			Timestamp: newMessage.Timestamp, 
+			UserID: newMessage.UserID, 
+			RecipientID: newMessage.RecipientID,
+			RecipientUsername: newMessage.RecipientUsername,
 		}
+		c.Pool.Broadcast <- message
+		fmt.Printf("Message Received: %+v\n", message)
 	}
 }

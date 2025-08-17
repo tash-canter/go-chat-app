@@ -12,12 +12,14 @@ import (
 
 func LoginUser(w http.ResponseWriter, r *http.Request) error {
     var user db.User
+    fmt.Println("HERE", r)
     err := json.NewDecoder(r.Body).Decode(&user)
     if err != nil {
         http.Error(w, "Invalid request", http.StatusBadRequest)
         return err
     }
 
+    fmt.Println("GERE", user)
     // Fetch the stored user from the database
     var storedUser db.User
     err = db.Db.QueryRow("SELECT id, username, password FROM users WHERE username = $1", user.Username).Scan(&storedUser.UserID, &storedUser.Username, &storedUser.Password)
@@ -45,8 +47,20 @@ func LoginUser(w http.ResponseWriter, r *http.Request) error {
         return err
     }
 
+    // Set JWT as httpOnly cookie
+    cookie := &http.Cookie{
+        Name:     "auth_token",
+        Value:    token,
+        HttpOnly: true,
+        Secure:   true,              // requires HTTPS in production
+        SameSite: http.SameSiteLaxMode,
+        Path:     "/",
+        MaxAge:   60 * 60 * 24 * 7,  // 1 week
+    }
+    http.SetCookie(w, cookie)
+
     // Return the token as JSON
     w.Header().Set("Content-Type", "application/json")
-    json.NewEncoder(w).Encode(RegisterResponse{JWT: token, UserId: storedUser.UserID})
+    json.NewEncoder(w).Encode(RegisterResponse{Username: storedUser.Username, UserID: storedUser.UserID})
     return nil
 }
