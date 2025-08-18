@@ -1,17 +1,18 @@
-import React, { useContext } from "react";
+import React from "react";
 import AppBar from "@mui/material/AppBar";
 import Toolbar from "@mui/material/Toolbar";
 import Typography from "@mui/material/Typography";
 import Button from "@mui/material/Button";
 import ChatIcon from "@mui/icons-material/Chat";
-import { useNavigate } from "react-router-dom";
 import { useChatStore } from "../../stores/state";
+import { useLogout } from "../../api/queries";
 
 export const Header = () => {
-  const { logout, recipientUsername, isLoggedIn } = useChatStore();
+  const { recipientUsername, isLoggedIn } = useChatStore();
+  const { mutate: logoutUser } = useLogout();
 
   const handleLogout = () => {
-    logout();
+    logoutUser();
   };
 
   return (

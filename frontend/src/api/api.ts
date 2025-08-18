@@ -83,3 +83,27 @@ export const fetchUsers = async (query: string) => {
   }
   return response.json();
 };
+
+export const validateCookie = async (): Promise<AuthResponse> => {
+  const response = await fetch("http://localhost:8080/api/validateCookie", {
+    method: "GET",
+    credentials: "include", // Important: include cookies in the request
+  });
+
+  if (!response.ok) {
+    throw new Error("Cookie validation failed");
+  }
+
+  return response.json();
+};
+
+export const logoutUser = async (): Promise<void> => {
+  const response = await fetch("http://localhost:8080/api/logout", {
+    method: "POST",
+    credentials: "include", // Important: include cookies in the request
+  });
+
+  if (!response.ok) {
+    throw new Error("Logout failed");
+  }
+};

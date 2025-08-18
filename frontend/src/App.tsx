@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ThemeProvider } from "@mui/material/styles";
 import CssBaseline from "@mui/material/CssBaseline";
@@ -6,13 +6,23 @@ import { Header } from "./components";
 import { ChatPage } from "./components";
 import theme from "./theme";
 import { Auth } from "./components/Auth/Auth";
+import { LoadingSpinner } from "./components/LoadingSpinner";
 import { useChatStore } from "./stores/state";
+import { useValidateCookie } from "./api/queries";
 
-const App = () => {
-  const queryClient = new QueryClient();
-  const { currentView } = useChatStore();
+const AppContent = () => {
+  const { currentView, isLoading } = useChatStore();
+  const { mutate: validateCookie } = useValidateCookie();
+
+  useEffect(() => {
+    validateCookie();
+  }, [validateCookie]);
 
   const renderMainContent = () => {
+    if (isLoading) {
+      return <LoadingSpinner />;
+    }
+
     switch (currentView) {
       case "auth":
         return <Auth />;
@@ -24,11 +34,21 @@ const App = () => {
   };
 
   return (
+    <>
+      <Header />
+      {renderMainContent()}
+    </>
+  );
+};
+
+const App = () => {
+  const queryClient = new QueryClient();
+
+  return (
     <QueryClientProvider client={queryClient}>
       <ThemeProvider theme={theme}>
         <CssBaseline />
-        <Header />
-        {renderMainContent()}
+        <AppContent />
       </ThemeProvider>
     </QueryClientProvider>
   );
