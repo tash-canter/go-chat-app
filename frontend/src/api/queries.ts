@@ -1,6 +1,5 @@
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { fetchUsers, loginUser, registerUser } from "./api";
-import { useNavigate } from "react-router-dom";
 import { useChatStore } from "../stores/state";
 
 export const QUERY_KEYS = {
@@ -8,14 +7,12 @@ export const QUERY_KEYS = {
 };
 
 export const useAuth = (isLogin: boolean) => {
-  const navigate = useNavigate();
   const { setAuth } = useChatStore();
 
   return useMutation({
     mutationFn: isLogin ? loginUser : registerUser,
     onSuccess: (data) => {
       setAuth(data.username, data.userID);
-      navigate("/chat");
     },
   });
 };

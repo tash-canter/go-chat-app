@@ -1,5 +1,4 @@
 import React, { useState } from "react";
-import { Link } from "react-router-dom";
 import {
   Box,
   Container,
@@ -15,11 +14,18 @@ interface AuthCardProps {
   onSubmit: (username: string, password: string) => void;
   isLogin: boolean;
   error: Error | null;
+  onToggleMode: () => void;
 }
 
-export const AuthCard = ({ onSubmit, isLogin, error }: AuthCardProps) => {
+export const AuthCard = ({
+  onSubmit,
+  isLogin,
+  error,
+  onToggleMode,
+}: AuthCardProps) => {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
+
   return (
     <Container
       maxWidth="sm"
@@ -47,6 +53,7 @@ export const AuthCard = ({ onSubmit, isLogin, error }: AuthCardProps) => {
           component="form"
           onSubmit={(e: Event) => {
             e.preventDefault();
+            console.log("i am here 2");
             onSubmit(username, password);
           }}
           noValidate
@@ -99,9 +106,13 @@ export const AuthCard = ({ onSubmit, isLogin, error }: AuthCardProps) => {
 
           <Box sx={{ textAlign: "center", mt: 2 }}>
             <MuiLink
-              component={Link}
-              to={isLogin ? "/register" : "/"}
+              component="button"
               variant="body2"
+              onClick={(e: Event) => {
+                e.preventDefault();
+                onToggleMode();
+              }}
+              sx={{ background: "none", border: "none", cursor: "pointer" }}
             >
               {isLogin
                 ? "Don't have an account? Sign Up"

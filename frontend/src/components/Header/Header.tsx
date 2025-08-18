@@ -8,12 +8,10 @@ import { useNavigate } from "react-router-dom";
 import { useChatStore } from "../../stores/state";
 
 export const Header = () => {
-  const navigate = useNavigate();
   const { logout, recipientUsername, isLoggedIn } = useChatStore();
 
   const handleLogout = () => {
     logout();
-    navigate("/");
   };
 
   return (
