@@ -13,7 +13,6 @@ export const ChatInput = ({ send }: ChatInputProps) => {
     e.preventDefault();
     if (message.trim() !== "") {
       send(message);
-      console.log("send", message);
       setMessage("");
     }
   };
@@ -46,7 +45,13 @@ export const ChatInput = ({ send }: ChatInputProps) => {
         }
         onKeyDown={handleKeyDown}
         autoFocus
-        sx={{ mr: 1 }}
+        sx={{
+          mr: 1,
+          "& .MuiOutlinedInput-root": {
+            borderRadius: "8px",
+            boxShadow: "0 2px 5px rgba(0,0,0,0.1)",
+          },
+        }}
       />
       <IconButton color="primary" type="submit" aria-label="send">
         <SendIcon />

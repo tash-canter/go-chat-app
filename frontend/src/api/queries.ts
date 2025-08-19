@@ -34,7 +34,6 @@ export const useValidateCookie = () => {
       setAuth(data.username, data.userID);
     },
     onError: () => {
-      console.log("No valid cookie found, staying on auth page");
       setLoading(false);
     },
   });

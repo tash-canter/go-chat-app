@@ -26,6 +26,17 @@ export const SpeechBubble = ({
         display: "flex",
         justifyContent: isFromCurrentUser ? "flex-end" : "flex-start",
         mb: 2,
+        animation: "fadeInSlideUp 0.3s ease-out",
+        "@keyframes fadeInSlideUp": {
+          "0%": {
+            opacity: 0,
+            transform: "translateY(20px)",
+          },
+          "100%": {
+            opacity: 1,
+            transform: "translateY(0)",
+          },
+        },
       }}
     >
       <Paper
@@ -35,7 +46,10 @@ export const SpeechBubble = ({
           maxWidth: "70%",
           backgroundColor: isFromCurrentUser ? "primary.main" : "grey.200",
           color: isFromCurrentUser ? "white" : "text.primary",
-          borderRadius: 2,
+          borderRadius: isFromCurrentUser
+            ? "16px 16px 0px 16px"
+            : "16px 16px 16px 0px",
+          position: "relative",
         }}
       >
         <Typography variant="subtitle2" sx={{ fontWeight: "bold", mb: 0.5 }}>

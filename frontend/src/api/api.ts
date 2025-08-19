@@ -87,7 +87,7 @@ export const fetchUsers = async (query: string) => {
 export const validateCookie = async (): Promise<AuthResponse> => {
   const response = await fetch("http://localhost:8080/api/validateCookie", {
     method: "GET",
-    credentials: "include", // Important: include cookies in the request
+    credentials: "include",
   });
 
   if (!response.ok) {
@@ -100,7 +100,7 @@ export const validateCookie = async (): Promise<AuthResponse> => {
 export const logoutUser = async (): Promise<void> => {
   const response = await fetch("http://localhost:8080/api/logout", {
     method: "POST",
-    credentials: "include", // Important: include cookies in the request
+    credentials: "include",
   });
 
   if (!response.ok) {

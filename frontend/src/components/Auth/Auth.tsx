@@ -7,12 +7,10 @@ export const Auth = () => {
   const { mutate: authenticate, error } = useAuth(isLogin);
 
   const handleSubmit = (username: string, password: string) => {
-    console.log("i am here");
     authenticate({ username, password });
   };
 
   const toggleAuthMode = () => {
-    console.log("toggleAuthMode called");
     setIsLogin(!isLogin);
   };
 

@@ -53,7 +53,6 @@ export const AuthCard = ({
           component="form"
           onSubmit={(e: Event) => {
             e.preventDefault();
-            console.log("i am here 2");
             onSubmit(username, password);
           }}
           noValidate

@@ -1,78 +1,82 @@
-import React, { useContext, useMemo, useState } from "react";
-import { observer } from "mobx-react-lite";
-import debounce from "lodash/debounce";
-import { Box, Paper, Divider } from "@mui/material";
+import React from "react";
+import { Box, IconButton, Typography, Divider } from "@mui/material";
+import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 
-import { ChatHistory, ChatInput, SearchSidebar } from "./components";
+import { ChatHistory, ChatInput } from "./components";
 import { useWebSocket } from "../../api/useWebsocket";
 import { useChatStore } from "../../stores/state";
-import { useSearchUsers } from "../../api/queries";
+import { LogoutUser } from "../LogoutUser";
 
 export const ChatPage = () => {
-  const { recipientID, recipientUsername, username } = useChatStore();
-
+  const { recipientUsername, username, setCurrentView, resetRecipient } =
+    useChatStore();
   const { messages, sendMessage } = useWebSocket();
-  const [query, setQuery] = useState("");
-  const { data, isLoading } = useSearchUsers(query);
 
-  const debouncedSetQuery = useMemo(
-    () => debounce((value: string) => setQuery(value), 300),
-    []
-  );
+  if (!username || !recipientUsername) {
+    return null;
+  }
 
-  const handleSearch = (queryString: string) => {
-    debouncedSetQuery(queryString);
+  const handleBackToSearch = () => {
+    resetRecipient();
+    setCurrentView("search");
   };
-
-  console.log(username, recipientUsername);
 
   return (
     <Box
       sx={{
-        height: "calc(100vh - 64px)",
+        height: "100vh",
         display: "flex",
+        flexDirection: "column",
         width: "100%",
         overflow: "hidden",
       }}
     >
-      <Paper
-        elevation={0}
+      <Box
         sx={{
           display: "flex",
-          width: "100%",
-          height: "100%",
-          borderRadius: 0,
+          alignItems: "center",
+          justifyContent: "space-between",
+          padding: 2,
+          borderBottom: 1,
+          borderColor: "divider",
+          flexShrink: 0,
+          backgroundColor: "grey.50",
         }}
       >
-        {username && recipientUsername && (
-          <Box
+        <Box sx={{ display: "flex", alignItems: "center" }}>
+          <IconButton onClick={handleBackToSearch} sx={{ mr: 2 }}>
+            <ArrowBackIcon />
+          </IconButton>
+          <Typography
+            variant="h6"
+            component="h1"
             sx={{
-              flexGrow: 1,
-              display: "flex",
-              flexDirection: "column",
-              height: "100%",
-              width: "75%",
+              fontWeight: 500,
+              color: "text.primary",
+              fontSize: "1.1rem",
+              letterSpacing: "0.5px",
             }}
           >
-            <ChatHistory chatHistory={messages} username={username} />
-            <Divider />
-            <ChatInput send={sendMessage} />
-          </Box>
-        )}
+            Chat with {recipientUsername}
+          </Typography>
+        </Box>
 
-        <Divider orientation="vertical" flexItem />
+        <LogoutUser size="small" />
+      </Box>
 
-        {!recipientID && (
-          <Box sx={{ width: "100%", height: "100%" }}>
-            <SearchSidebar
-              onSearch={handleSearch}
-              searchResults={data ? data.users : []}
-              isLoading={isLoading}
-              selectedUserID={recipientID ?? 0}
-            />
-          </Box>
-        )}
-      </Paper>
+      <Box
+        sx={{
+          flexGrow: 1,
+          display: "flex",
+          flexDirection: "column",
+          minHeight: 0,
+          backgroundColor: "background.default",
+        }}
+      >
+        <ChatHistory chatHistory={messages} username={username} />
+        <Divider />
+        <ChatInput send={sendMessage} />
+      </Box>
     </Box>
   );
 };

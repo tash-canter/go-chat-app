@@ -12,6 +12,10 @@ export const theme = createTheme({
       default: "#f0f4f8",
       paper: "#ffffff",
     },
+    grey: {
+      50: "#fafafa",
+      200: "#eeeeee",
+    },
   },
   typography: {
     fontFamily: '"Roboto", "Helvetica", "Arial", sans-serif',

@@ -1,5 +1,5 @@
 import React, { useRef, useEffect } from "react";
-import { Box, Typography, Paper } from "@mui/material";
+import { Box } from "@mui/material";
 import { SpeechBubble } from "./SpeechBubble";
 import { Message } from "../../../types";
 
@@ -11,7 +11,6 @@ interface ChatHistoryProps {
 export const ChatHistory = ({ chatHistory, username }: ChatHistoryProps) => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  // Auto scroll to bottom on new messages
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [chatHistory]);

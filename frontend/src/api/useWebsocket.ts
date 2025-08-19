@@ -1,17 +1,20 @@
-// src/hooks/useWebSocket.ts
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { useQueryClient, useMutation, useQuery } from "@tanstack/react-query";
 import { fetchMessages } from "./api";
 import { useChatStore } from "../stores/state";
 import { QUERY_KEYS } from "./queries";
 import { Message } from "../types";
+import {
+  getWebSocket,
+  isWebSocketConnected,
+  setMessageHandler,
+} from "../utils/websocket";
 
 export const useWebSocket = () => {
-  const socketRef = useRef<WebSocket | null>(null);
-  const [isConnected, setIsConnected] = useState(false);
   const queryClient = useQueryClient();
-
   const { userID, username, recipientID, recipientUsername } = useChatStore();
+  const [isConnected, setIsConnected] = useState(false);
+
   const {
     data: messages = [],
     isLoading,
@@ -25,23 +28,12 @@ export const useWebSocket = () => {
 
   const { mutate: sendMessage } = useMutation({
     mutationFn: async (messageText: string) => {
-      console.log("HERE");
-      if (
-        !socketRef.current ||
-        socketRef.current.readyState !== WebSocket.OPEN
-      ) {
-        console.log("not connected");
+      const socket = getWebSocket();
+      if (!socket || !isWebSocketConnected()) {
         throw new Error("WebSocket not connected");
       }
 
       if (!userID || !username || !recipientUsername || !recipientID) {
-        console.log(
-          "not available",
-          userID,
-          username,
-          recipientUsername,
-          recipientID
-        );
         throw new Error("Send message not available");
       }
 
@@ -54,8 +46,7 @@ export const useWebSocket = () => {
         recipientUsername,
       };
 
-      console.log("sending", msgObj);
-      socketRef.current.send(JSON.stringify(msgObj));
+      socket.send(JSON.stringify(msgObj));
       return msgObj;
     },
     onSuccess: (newMessage) => {
@@ -69,60 +60,41 @@ export const useWebSocket = () => {
   });
 
   useEffect(() => {
-    const connectWebSocket = () => {
-      const socket = new WebSocket("ws://localhost:5173/ws");
-
-      socket.onopen = () => {
-        console.log("WebSocket connected");
-        setIsConnected(true);
-      };
-
-      socket.onmessage = (event: MessageEvent) => {
-        try {
-          const receivedMessage = JSON.parse(event.data) as Message;
-
-          queryClient.setQueryData(
-            QUERY_KEYS.messages(receivedMessage.recipientID),
-            (oldMessages: Message[] = []) => {
-              const messageExists = oldMessages.some(
-                (msg) =>
-                  msg.timestamp === receivedMessage.timestamp &&
-                  msg.userID === receivedMessage.userID &&
-                  msg.body === receivedMessage.body
-              );
-
-              if (messageExists) return oldMessages;
-              return [...oldMessages, receivedMessage];
-            }
+    const handleMessage = (receivedMessage: Message) => {
+      queryClient.setQueryData(
+        QUERY_KEYS.messages(receivedMessage.recipientID),
+        (oldMessages: Message[] = []) => {
+          const messageExists = oldMessages.some(
+            (msg) =>
+              msg.timestamp === receivedMessage.timestamp &&
+              msg.userID === receivedMessage.userID &&
+              msg.body === receivedMessage.body
           );
-        } catch (error) {
-          console.error("Error parsing message:", error);
+
+          if (messageExists) return oldMessages;
+          return [...oldMessages, receivedMessage];
         }
-      };
-
-      socket.onclose = (event) => {
-        console.log("WebSocket closed:", event);
-        setIsConnected(false);
-      };
-
-      socket.onerror = (error) => {
-        console.error("WebSocket error:", error);
-        setIsConnected(false);
-      };
-
-      socketRef.current = socket;
+      );
     };
 
-    connectWebSocket();
+    setMessageHandler(handleMessage);
 
     return () => {
-      if (socketRef.current) {
-        socketRef.current.close();
-        socketRef.current = null;
-        setIsConnected(false);
-      }
+      setMessageHandler(null);
     };
   }, [queryClient]);
+
+  useEffect(() => {
+    const checkConnection = () => {
+      setIsConnected(isWebSocketConnected());
+    };
+
+    checkConnection();
+
+    const interval = setInterval(checkConnection, 1000);
+
+    return () => clearInterval(interval);
+  }, []);
 
   useEffect(() => {
     if (recipientID) {
