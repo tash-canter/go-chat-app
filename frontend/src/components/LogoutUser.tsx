@@ -11,7 +11,7 @@ export const LogoutUser = ({ size = "medium" }: LogoutUserProps) => {
   const { mutate: logoutUser } = useLogout();
 
   return (
-    <Button color="inherit" onClick={logoutUser}>
+    <Button color="inherit" onClick={() => logoutUser()}>
       Logout
     </Button>
   );

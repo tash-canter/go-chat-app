@@ -51,7 +51,7 @@ export const AuthCard = ({
 
         <Box
           component="form"
-          onSubmit={(e: Event) => {
+          onSubmit={(e: React.FormEvent) => {
             e.preventDefault();
             onSubmit(username, password);
           }}
@@ -107,7 +107,7 @@ export const AuthCard = ({
             <MuiLink
               component="button"
               variant="body2"
-              onClick={(e: Event) => {
+              onClick={(e: React.MouseEvent) => {
                 e.preventDefault();
                 onToggleMode();
               }}
