@@ -51,7 +51,7 @@ export const fetchMessages = async (recipientId: number | null) => {
 
   try {
     const response = await fetch(
-      `http://localhost:8080/api/hydratePrivateMessages?recipient_id=${recipientId}`,
+      `http://localhost:8080/api/hydrateMessages?recipient_id=${recipientId}`,
       {
         method: "GET",
         credentials: "include",
@@ -63,7 +63,7 @@ export const fetchMessages = async (recipientId: number | null) => {
     }
 
     const data = await response.json();
-    return data.privateMessages || [];
+    return data.messages || [];
   } catch (error) {
     console.error("Error fetching messages:", error);
     throw error;

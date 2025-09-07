@@ -2,10 +2,10 @@ package websocket
 
 import (
 	"encoding/json"
-	"fmt"
 	"log"
 
 	"github.com/gorilla/websocket"
+	"github.com/tash-canter/go-chat-app/backend/pkg/validation"
 )
 
 type Client struct {
@@ -43,7 +43,21 @@ func (c *Client) Read() {
 
 		err = json.Unmarshal([]byte(p), &newMessage)
 		if err != nil {
-			log.Fatalf("Error unmarshalling JSON: %v", err)
+			log.Printf("Error unmarshalling JSON: %v", err)
+			continue
+		}
+
+		// Validate message content
+		contentValidation := validation.ValidateMessageContent(newMessage.Body)
+		if !contentValidation.IsValid {
+			log.Printf("Message validation failed for user %d: %+v", newMessage.UserID, contentValidation.Errors)
+			continue
+		}
+
+		// Basic recipient ID check
+		if newMessage.RecipientID == 0 {
+			log.Printf("Invalid recipient ID (0) from user %d", newMessage.UserID)
+			continue
 		}
 
 		message := Message{
@@ -56,6 +70,6 @@ func (c *Client) Read() {
 			RecipientUsername: newMessage.RecipientUsername,
 		}
 		c.Pool.Broadcast <- message
-		fmt.Printf("Message Received: %+v\n", message)
+		log.Printf("Message received from user %d: %s", message.UserID, message.Body)
 	}
 }

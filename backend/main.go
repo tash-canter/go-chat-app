@@ -1,47 +1,102 @@
 package main
 
 import (
-	"fmt"
-	"net/http"
-
+	"context"
 	"log"
+	"net/http"
+	"os"
+	"os/signal"
+	"syscall"
+	"time"
 
+	"github.com/gorilla/mux"
+	"github.com/tash-canter/go-chat-app/backend/pkg/config"
 	"github.com/tash-canter/go-chat-app/backend/pkg/db"
 	"github.com/tash-canter/go-chat-app/backend/pkg/handlers"
 	"github.com/tash-canter/go-chat-app/backend/pkg/middleware"
+	"github.com/tash-canter/go-chat-app/backend/pkg/utils"
 	"github.com/tash-canter/go-chat-app/backend/pkg/websocket"
 )
 
 func main() {
-	fmt.Println("Distributed Chat App v0.01")
+	log.Println("Distributed Chat App v0.01")
 
-	mux := http.NewServeMux()
+	cfg := config.LoadConfig()
 
-	db.MigrateDb()
-	db.InitDb()
+	utils.InitJWT(cfg.JWT.Secret)
 
-	mux.HandleFunc("/api/login", handlers.LoginHandler)
-	mux.HandleFunc("/api/register", handlers.RegisterHandler)
-	mux.HandleFunc("/api/logout", handlers.LogoutHandler)
-	mux.HandleFunc("/api/validateCookie", handlers.ValidateCookieHandler)
-	mux.HandleFunc("/api/hydratePrivateMessages", handlers.HydratePrivateMessagesHandler)
-	mux.HandleFunc("/api/searchUsers", handlers.SearchUsersHandler)
+	websocket.InitWebSocket(cfg)
+
+	db.InitDb(cfg)
+	defer db.Db.Close()
+
+	router := mux.NewRouter()
+
+	api := router.PathPrefix("/api").Subrouter()
+	
+	api.HandleFunc("/login", handlers.LoginHandler(cfg)).Methods("POST")
+	api.HandleFunc("/register", handlers.RegisterHandler(cfg)).Methods("POST")
+	api.HandleFunc("/logout", handlers.LogoutHandler).Methods("POST")
+	
+	api.HandleFunc("/validateCookie", middleware.AuthMiddleware(handlers.ValidateCookieHandler)).Methods("GET")
+	api.HandleFunc("/hydrateMessages", middleware.AuthMiddleware(handlers.HydrateMessagesHandler)).Methods("GET")
+	api.HandleFunc("/searchUsers", middleware.AuthMiddleware(handlers.SearchUsersHandler)).Methods("GET")
+
+	router.HandleFunc("/ws", websocket.SetupWebsocket)
+
+	handler := middleware.CorsMiddleware(cfg)(router)
+
+	httpServer := &http.Server{
+		Addr:    ":" + cfg.Server.HTTPPort,
+		Handler: handler,
+	}
+
+	wsServer := &http.Server{
+		Addr:    ":" + cfg.Server.WebSocketPort,
+		Handler: router,
+	}
 
 	go func() {
-        log.Println("Starting HTTP server on :8080")
-		handler := middleware.CorsMiddleware(mux)
-		err := http.ListenAndServe(":8080", handler)
-        if err != nil {
-            log.Fatalf("HTTP server error: %v", err)
-        }
-    }()
+		log.Printf("Starting HTTP server on :%s", cfg.Server.HTTPPort)
+		if err := httpServer.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			log.Fatalf("HTTP server error: %v", err)
+		}
+	}()
 
-	http.HandleFunc("/ws", websocket.SetupWebsocket)
-	log.Println("Starting WebSocket server on :8081")
-    err := http.ListenAndServe(":8081", nil)
-    if err != nil {
-        log.Fatalf("WebSocket server error: %v", err)
-    }
+	go func() {
+		log.Printf("Starting WebSocket server on :%s", cfg.Server.WebSocketPort)
+		if err := wsServer.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			log.Fatalf("WebSocket server error: %v", err)
+		}
+	}()
 
-	defer db.Db.Close()
+	quit := make(chan os.Signal, 1)
+	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
+	<-quit
+	log.Println("Shutting down servers...")
+
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	if err := httpServer.Shutdown(ctx); err != nil {
+		log.Printf("HTTP server shutdown error: %v", err)
+	} else {
+		log.Println("HTTP server shutdown complete")
+	}
+
+	if err := wsServer.Shutdown(ctx); err != nil {
+		log.Printf("WebSocket server shutdown error: %v", err)
+	} else {
+		log.Println("WebSocket server shutdown complete")
+	}
+
+	websocket.GetPool().Shutdown()
+
+	if err := db.Db.Close(); err != nil {
+		log.Printf("Database close error: %v", err)
+	} else {
+		log.Println("Database connection closed")
+	}
+
+	log.Println("Server shutdown complete")
 }

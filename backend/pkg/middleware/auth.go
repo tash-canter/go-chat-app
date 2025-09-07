@@ -2,21 +2,28 @@ package middleware
 
 import (
 	"net/http"
-	"strings"
+
+	"github.com/tash-canter/go-chat-app/backend/pkg/utils"
 )
 
-func ExtractTokenFromHeader(r *http.Request) string {
-	authHeader := r.Header.Get("Authorization")
-	if len(authHeader) > 7 && strings.ToUpper(authHeader[0:7]) == "BEARER " {
-	  return authHeader[7:]
-	}
-	return ""
-  }
+func AuthMiddleware(next http.HandlerFunc) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		cookie, err := r.Cookie("auth_token")
+		if err != nil {
+			utils.SendErrorResponse(w, http.StatusUnauthorized, "No auth cookie found")
+			return
+		}
 
-  func ExtractTokenFromUrl(r *http.Request) string {
-	token := r.URL.Query().Get("token")
-	if token != "" {
-		return token
+		claims, err := utils.ValidateJWT(cookie.Value)
+		if err != nil {
+			utils.SendErrorResponse(w, http.StatusUnauthorized, "Invalid or expired token")
+			return
+		}
+
+		ctx := utils.SetUserContext(r.Context(), claims)
+		r = r.WithContext(ctx)
+
+		next.ServeHTTP(w, r)
 	}
-	return ""
-  }
+}
+

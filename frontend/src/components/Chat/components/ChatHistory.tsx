@@ -19,7 +19,6 @@ export const ChatHistory = ({ chatHistory, username }: ChatHistoryProps) => {
     <Box
       sx={{
         flex: 1,
-        p: 2,
         overflow: "auto",
         backgroundColor: "background.default",
         display: "flex",

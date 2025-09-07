@@ -1,20 +1,26 @@
 package middleware
 
-import "net/http"
+import (
+	"net/http"
 
-func CorsMiddleware(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Access-Control-Allow-Origin", "http://localhost:5173")
-		w.Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS, PUT, DELETE")
-		w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
-		w.Header().Set("Access-Control-Allow-Credentials", "true")
+	"github.com/tash-canter/go-chat-app/backend/pkg/config"
+)
 
-		// Handle preflight request
-		if r.Method == http.MethodOptions {
-			w.WriteHeader(http.StatusOK)
-			return
-		}
+func CorsMiddleware(cfg *config.Config) func(http.Handler) http.Handler {
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			w.Header().Set("Access-Control-Allow-Origin", cfg.CORS.AllowedOrigin)
+			w.Header().Set("Access-Control-Allow-Methods", cfg.CORS.AllowedMethods)
+			w.Header().Set("Access-Control-Allow-Headers", cfg.CORS.AllowedHeaders)
+			w.Header().Set("Access-Control-Allow-Credentials", "true")
 
-		next.ServeHTTP(w, r)
-	})
+			// Handle preflight request
+			if r.Method == http.MethodOptions {
+				w.WriteHeader(http.StatusOK)
+				return
+			}
+
+			next.ServeHTTP(w, r)
+		})
+	}
 }
